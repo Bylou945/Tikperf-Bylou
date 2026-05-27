@@ -1,0 +1,2854 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f8d7ce">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="TikPerf">
+<meta name="description" content="Analyse de performance TikTok Shop pour By Lou">
+<title>TikPerf By Lou · v1.4.4</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Firebase SDK (modular CDN bundles, v10) -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
+  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
+  import { getFirestore, doc, setDoc, getDoc, onSnapshot, serverTimestamp, enableIndexedDbPersistence, collection, getDocs, deleteDoc, writeBatch } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+  window.firebaseModules = { initializeApp, getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, getFirestore, doc, setDoc, getDoc, onSnapshot, serverTimestamp, enableIndexedDbPersistence, collection, getDocs, deleteDoc, writeBatch };
+  window.dispatchEvent(new Event('firebase-ready'));
+</script>
+<style>
+:root {
+  --rose-50:  #fdf4f1;
+  --rose-100: #fbe6df;
+  --rose-200: #f8d7ce;
+  --rose-300: #f0bdaf;
+  --rose-400: #e89a87;
+  --rose-500: #d97560;
+  --rose-600: #b85a47;
+  --rose-700: #8f4334;
+  --ink-900: #2a1f1c;
+  --ink-700: #594843;
+  --ink-500: #8c7872;
+  --ink-300: #c4b5b0;
+  --ink-100: #ede4e0;
+  --paper:   #fbf6f3;
+  --white:   #ffffff;
+  --good:    #5a8a6b;
+  --bad:     #c25450;
+  --warn:    #c89446;
+  --shadow-sm: 0 1px 2px rgba(42, 31, 28, 0.04), 0 1px 3px rgba(42, 31, 28, 0.06);
+  --shadow:    0 2px 4px rgba(42, 31, 28, 0.04), 0 4px 12px rgba(42, 31, 28, 0.08);
+  --shadow-lg: 0 8px 24px rgba(42, 31, 28, 0.10), 0 2px 6px rgba(42, 31, 28, 0.04);
+  --radius:    14px;
+  --radius-sm: 8px;
+  --serif: 'Cormorant Garamond', Georgia, serif;
+  --sans:  'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--sans);
+  background: var(--paper);
+  color: var(--ink-900);
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* ============ LAYOUT — Hamburger drawer ============ */
+.app { display: flex; flex-direction: column; min-height: 100vh; }
+
+/* Top bar (always visible) */
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 18px;
+  background: rgba(251, 246, 243, 0.95);
+  backdrop-filter: saturate(140%) blur(10px);
+  -webkit-backdrop-filter: saturate(140%) blur(10px);
+  border-bottom: 1px solid var(--ink-100);
+}
+.hamburger {
+  background: var(--white); border: 1px solid var(--ink-100);
+  width: 38px; height: 38px;
+  border-radius: var(--radius-sm);
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: var(--ink-700);
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+.hamburger:hover { background: var(--rose-50); color: var(--rose-700); border-color: var(--rose-300); }
+.hamburger svg { width: 18px; height: 18px; }
+.topbar-brand {
+  font-family: var(--serif); font-style: italic; font-size: 18px; color: var(--rose-700);
+  letter-spacing: 0.3px;
+}
+.topbar-brand strong { font-weight: 600; font-style: normal; color: var(--ink-900); margin-right: 4px; }
+.topbar-status { margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--ink-500); }
+.sync-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.3px;
+}
+.sync-badge.ok { background: rgba(90, 138, 107, 0.12); color: var(--good); }
+.sync-badge.syncing { background: rgba(200, 148, 70, 0.15); color: var(--warn); }
+.sync-badge.offline { background: rgba(140, 120, 114, 0.15); color: var(--ink-500); }
+.sync-badge.error { background: rgba(194, 84, 80, 0.12); color: var(--bad); }
+.sync-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.sync-badge.syncing .sync-dot { animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+.user-chip { font-size: 12px; color: var(--ink-700); padding: 6px 12px; border-radius: 100px; background: var(--rose-50); border: 1px solid var(--ink-100); }
+
+/* Drawer overlay + sidebar */
+.drawer-overlay {
+  position: fixed; inset: 0;
+  background: rgba(42, 31, 28, 0.40);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.25s ease;
+  z-index: 200;
+  backdrop-filter: blur(2px);
+}
+.drawer-overlay.open { opacity: 1; pointer-events: auto; }
+
+.sidebar {
+  position: fixed; top: 0; left: 0; bottom: 0;
+  width: 280px;
+  background: linear-gradient(180deg, var(--rose-100) 0%, var(--rose-200) 100%);
+  padding: 24px 18px;
+  display: flex; flex-direction: column;
+  border-right: 1px solid rgba(217, 117, 96, 0.12);
+  transform: translateX(-100%);
+  transition: transform 0.28s cubic-bezier(.2, .8, .2, 1);
+  z-index: 250;
+  box-shadow: 4px 0 24px rgba(42, 31, 28, 0.08);
+  overflow-y: auto;
+}
+.sidebar.open { transform: translateX(0); }
+
+.sidebar-close {
+  position: absolute; top: 14px; right: 14px;
+  background: rgba(255,255,255,0.5); border: none;
+  width: 32px; height: 32px; border-radius: var(--radius-sm);
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--ink-700);
+  transition: all 0.15s ease;
+}
+.sidebar-close:hover { background: var(--white); color: var(--rose-700); }
+
+.brand {
+  text-align: center;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(217, 117, 96, 0.15);
+}
+.brand img { width: 100%; max-width: 180px; height: auto; display: block; margin: 0 auto 8px; border-radius: 6px; }
+.brand-tag { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--rose-700); letter-spacing: 0.5px; }
+
+.nav { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.nav-btn {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px;
+  background: transparent; border: none; color: var(--ink-700);
+  font: 500 14px var(--sans);
+  text-align: left; cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+  width: 100%;
+}
+.nav-btn:hover { background: rgba(255, 255, 255, 0.5); color: var(--ink-900); }
+.nav-btn.active {
+  background: var(--white); color: var(--rose-700);
+  box-shadow: var(--shadow-sm);
+  font-weight: 600;
+}
+.nav-btn .ico { width: 18px; text-align: center; opacity: 0.8; }
+.nav-footer { font-size: 11px; color: var(--ink-500); text-align: center; padding-top: 16px; border-top: 1px solid rgba(217, 117, 96, 0.12); margin-top: auto; }
+
+.main {
+  padding: 24px 32px 60px;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.page-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 28px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--ink-100);
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.page-title { font-family: var(--serif); font-size: 32px; font-weight: 500; color: var(--ink-900); letter-spacing: -0.5px; }
+.page-title em { font-style: italic; color: var(--rose-600); font-weight: 400; }
+.page-sub { font-size: 13px; color: var(--ink-500); margin-top: 4px; }
+
+.toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+/* ============ FILTERS ============ */
+.filter-group { display: inline-flex; background: var(--white); border-radius: var(--radius-sm); padding: 3px; box-shadow: var(--shadow-sm); border: 1px solid var(--ink-100); }
+.filter-btn {
+  padding: 6px 14px;
+  background: transparent; border: none;
+  font: 500 12px var(--sans);
+  color: var(--ink-700); cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+.filter-btn:hover { color: var(--ink-900); }
+.filter-btn.active { background: var(--rose-100); color: var(--rose-700); font-weight: 600; }
+
+/* ============ KPI GRID ============ */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.kpi {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--ink-100);
+  position: relative;
+  transition: all 0.2s ease;
+}
+.kpi:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+.kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--ink-500); font-weight: 600; margin-bottom: 8px; }
+.kpi-value { font-family: var(--serif); font-size: 28px; font-weight: 600; color: var(--ink-900); line-height: 1.1; }
+.kpi-value .currency { font-size: 18px; color: var(--ink-500); margin-left: 2px; }
+.kpi-sub { font-size: 11px; color: var(--ink-500); margin-top: 6px; }
+.kpi.accent { border-top: 3px solid var(--rose-400); }
+.kpi.positive { border-top: 3px solid var(--good); }
+.kpi.negative { border-top: 3px solid var(--bad); }
+.kpi.neutral { border-top: 3px solid var(--ink-300); }
+
+.kpi-value.good { color: var(--good); }
+.kpi-value.bad { color: var(--bad); }
+
+/* ============ CARDS ============ */
+.card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--ink-100);
+  margin-bottom: 20px;
+}
+.card-title { font-family: var(--serif); font-size: 20px; font-weight: 500; color: var(--ink-900); margin-bottom: 4px; }
+.card-sub { font-size: 12px; color: var(--ink-500); margin-bottom: 18px; }
+.card-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; gap: 16px; flex-wrap: wrap; }
+
+/* ============ TABLES ============ */
+.table-wrap { overflow-x: auto; margin: -8px; padding: 8px; }
+table.data { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.data th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--ink-500);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--ink-100);
+  background: var(--rose-50);
+  position: sticky; top: 0;
+  white-space: nowrap;
+}
+table.data th.num, table.data td.num { text-align: right; }
+table.data td { padding: 12px; border-bottom: 1px solid var(--ink-100); vertical-align: middle; }
+table.data tbody tr:hover { background: var(--rose-50); }
+table.data tr.total { font-weight: 600; background: var(--rose-50); }
+table.data tr.total td { border-bottom: none; border-top: 2px solid var(--rose-300); }
+.cell-good { color: var(--good); font-weight: 500; }
+.cell-bad { color: var(--bad); font-weight: 500; }
+.cell-muted { color: var(--ink-500); }
+.cell-strong { font-weight: 600; }
+.cell-mono { font-family: 'SF Mono', Menlo, monospace; font-size: 12px; }
+
+/* ============ BUTTONS ============ */
+.btn {
+  padding: 9px 18px;
+  border-radius: var(--radius-sm);
+  font: 500 13px var(--sans);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  display: inline-flex; align-items: center; gap: 8px;
+  text-decoration: none;
+}
+.btn-primary { background: var(--rose-500); color: white; }
+.btn-primary:hover { background: var(--rose-600); }
+.btn-ghost { background: var(--white); color: var(--ink-700); border-color: var(--ink-100); }
+.btn-ghost:hover { border-color: var(--rose-300); color: var(--rose-700); }
+.btn-danger { background: transparent; color: var(--bad); border-color: var(--ink-100); }
+.btn-danger:hover { background: var(--bad); color: white; border-color: var(--bad); }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+
+/* ============ DROPZONE ============ */
+.dropzone {
+  border: 2px dashed var(--rose-300);
+  background: var(--rose-50);
+  border-radius: var(--radius);
+  padding: 40px 24px;
+  text-align: center;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.dropzone:hover, .dropzone.drag { background: var(--rose-100); border-color: var(--rose-500); }
+.dropzone h3 { font-family: var(--serif); font-size: 22px; font-weight: 500; margin-bottom: 6px; color: var(--ink-900); }
+.dropzone p { font-size: 13px; color: var(--ink-700); margin-bottom: 14px; }
+.dropzone .file-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.5; }
+.dropzone input[type=file] { display: none; }
+
+/* ============ STATUS / BADGES ============ */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.badge-ok { background: rgba(90, 138, 107, 0.12); color: var(--good); }
+.badge-warn { background: rgba(200, 148, 70, 0.15); color: var(--warn); }
+.badge-bad { background: rgba(194, 84, 80, 0.12); color: var(--bad); }
+.badge-neutral { background: var(--ink-100); color: var(--ink-700); }
+
+.empty-state { text-align: center; padding: 60px 20px; color: var(--ink-500); }
+.empty-state h3 { font-family: var(--serif); font-size: 24px; color: var(--ink-700); margin-bottom: 8px; font-weight: 500; }
+.empty-state p { font-size: 13px; }
+
+/* ============ INPUTS ============ */
+.input, .select {
+  padding: 8px 12px;
+  border: 1px solid var(--ink-100);
+  border-radius: var(--radius-sm);
+  font: 500 13px var(--sans);
+  color: var(--ink-900);
+  background: white;
+  transition: all 0.15s ease;
+}
+.input:focus, .select:focus { outline: none; border-color: var(--rose-400); box-shadow: 0 0 0 3px rgba(217, 117, 96, 0.1); }
+.input-money { width: 100px; text-align: right; }
+.input-search { width: 280px; }
+label.field { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--ink-500); font-weight: 600; margin-bottom: 4px; }
+.field-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 16px; }
+
+/* ============ CHARGES PAGE ============ */
+.charges-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.charge-card {
+  background: white;
+  border-radius: var(--radius);
+  padding: 20px;
+  border: 1px solid var(--ink-100);
+  box-shadow: var(--shadow-sm);
+}
+.charge-card h4 { font-family: var(--serif); font-size: 18px; font-weight: 500; color: var(--ink-900); margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--ink-100); }
+.charge-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; }
+.charge-row .label { color: var(--ink-700); }
+.charge-row .value { font-weight: 600; color: var(--ink-900); font-variant-numeric: tabular-nums; }
+.charge-row.total { border-top: 1px solid var(--ink-100); margin-top: 8px; padding-top: 12px; font-size: 14px; }
+.charge-row.total .value { color: var(--bad); }
+
+/* ============ NOTIFICATIONS ============ */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--ink-900); color: white;
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  font-size: 13px;
+  z-index: 1000;
+  opacity: 0; transform: translateY(10px);
+  transition: all 0.25s ease;
+  max-width: 360px;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.error { background: var(--bad); }
+.toast.success { background: var(--good); }
+
+/* ============ PAGES ============ */
+.page { display: none; animation: fadeIn 0.25s ease; }
+.page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ============ CHART CONTAINER ============ */
+.chart-container { position: relative; height: 280px; margin-top: 8px; }
+.chart-container.tall { height: 360px; }
+
+/* ============ LOGIN SCREEN ============ */
+.login-screen {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--rose-100) 0%, var(--rose-200) 50%, var(--rose-50) 100%);
+  z-index: 500;
+  padding: 24px;
+}
+.login-card {
+  background: var(--white);
+  border-radius: 18px;
+  padding: 40px 32px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 20px 50px rgba(42, 31, 28, 0.12), 0 4px 12px rgba(42, 31, 28, 0.06);
+}
+.login-card .brand {
+  text-align: center;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--ink-100);
+}
+.login-card .brand img { max-width: 200px; margin: 0 auto; display: block; border-radius: 8px; }
+.login-card h1 {
+  font-family: var(--serif); font-size: 26px; font-weight: 500;
+  color: var(--ink-900); text-align: center; margin-bottom: 6px;
+}
+.login-card h1 em { font-style: italic; color: var(--rose-600); }
+.login-card .login-sub { text-align: center; font-size: 13px; color: var(--ink-500); margin-bottom: 26px; }
+.login-form { display: flex; flex-direction: column; gap: 14px; }
+.login-form .input { width: 100%; padding: 11px 14px; font-size: 14px; }
+.login-form .btn { width: 100%; justify-content: center; padding: 12px; font-size: 14px; }
+.login-error { color: var(--bad); font-size: 12px; text-align: center; margin-top: 6px; min-height: 16px; }
+.login-footer { text-align: center; font-size: 11px; color: var(--ink-500); margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--ink-100); }
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 900px) {
+  .main { padding: 18px 16px 60px; }
+  .page-title { font-size: 26px; }
+  .input-search { width: 100%; }
+  .page-head { flex-direction: column; align-items: stretch; }
+  .toolbar { width: 100%; }
+}
+@media (max-width: 640px) {
+  .topbar { padding: 10px 14px; gap: 10px; }
+  .topbar-brand { font-size: 15px; }
+  .topbar-status { gap: 6px; }
+  .user-chip { display: none; }
+  .sync-badge { font-size: 10px; padding: 3px 8px; }
+  .main { padding: 16px 12px 80px; }
+  .page-title { font-size: 22px; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .kpi { padding: 14px; }
+  .kpi-value { font-size: 22px; }
+  .kpi-label { font-size: 10px; }
+  /* Dashboard charts row collapses to single column on mobile */
+  .main > .page > div[style*="grid-template-columns: 2fr 1fr"],
+  .main > .page > div[style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  .card { padding: 16px; }
+  .card-title { font-size: 17px; }
+  .charges-grid { grid-template-columns: 1fr; gap: 12px; }
+  table.data { font-size: 12px; }
+  table.data th, table.data td { padding: 8px 6px; }
+  .btn { padding: 8px 14px; font-size: 13px; }
+  .filter-group { flex-wrap: wrap; }
+  .toast { left: 12px; right: 12px; bottom: 12px; max-width: none; }
+  .sidebar { width: 85vw; max-width: 320px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ============ LOGIN SCREEN ============ -->
+  <div class="login-screen" id="loginScreen" style="display:none;">
+    <div class="login-card">
+      <div class="brand">
+        <img src="data:image/jpeg;base64,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" alt="By Lou">
+      </div>
+      <h1>Tik<em>Perf</em></h1>
+      <div class="login-sub">Connexion à ton espace By Lou</div>
+      <form class="login-form" id="loginForm" autocomplete="on">
+        <input type="email" class="input" id="loginEmail" placeholder="Email" autocomplete="email" required>
+        <input type="password" class="input" id="loginPassword" placeholder="Mot de passe" autocomplete="current-password" required>
+        <button type="submit" class="btn btn-primary" id="loginSubmit">Se connecter</button>
+        <div class="login-error" id="loginError"></div>
+      </form>
+      <div class="login-footer">By Lou · TikPerf v1.4.4 · 2026</div>
+    </div>
+  </div>
+
+  <!-- ============ TOPBAR ============ -->
+  <header class="topbar" id="topbar" style="display:none;">
+    <button class="hamburger" id="hamburgerBtn" aria-label="Ouvrir le menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+      </svg>
+    </button>
+    <div class="topbar-brand"><strong>TikPerf</strong> By Lou</div>
+    <div class="topbar-status">
+      <span class="sync-badge offline" id="syncBadge"><span class="sync-dot"></span><span id="syncLabel">Hors ligne</span></span>
+      <span class="user-chip" id="userChip"></span>
+    </div>
+  </header>
+
+  <!-- ============ DRAWER OVERLAY ============ -->
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+
+  <!-- ============ SIDEBAR (drawer) ============ -->
+  <aside class="sidebar" id="sidebar">
+    <button class="sidebar-close" id="sidebarClose" aria-label="Fermer">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+    <div class="brand">
+      <img src="data:image/jpeg;base64,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" alt="By Lou">
+      <div class="brand-tag">TikPerf · v1.4.4</div>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn active" data-page="dashboard"><span class="ico">◐</span> Tableau de bord</button>
+      <button class="nav-btn" data-page="import"><span class="ico">↓</span> Import données</button>
+      <button class="nav-btn" data-page="catalogue"><span class="ico">▦</span> Catalogue & coûts</button>
+      <button class="nav-btn" data-page="charges"><span class="ico">€</span> Charges TikTok</button>
+      <button class="nav-btn" data-page="produits"><span class="ico">◊</span> Analyse produits</button>
+      <button class="nav-btn" data-page="commandes"><span class="ico">≡</span> Commandes</button>
+      <button class="nav-btn" data-page="parametres"><span class="ico">⚙</span> Paramètres</button>
+    </nav>
+    <div class="nav-footer">By Lou · TikPerf v1.4.4<br>2026</div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main" id="mainContent" style="display:none;">
+
+    <!-- ===== PAGE DASHBOARD ===== -->
+    <section class="page active" data-page="dashboard">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Tableau de <em>bord</em></h1>
+          <div class="page-sub" id="dashSub">Vue d'ensemble des performances</div>
+        </div>
+        <div class="toolbar">
+          <div class="filter-group" id="yearFilterDash"></div>
+          <div class="filter-group">
+            <button class="filter-btn active" data-vat="ht">HT</button>
+            <button class="filter-btn" data-vat="ttc">TTC</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="dashEmpty" class="empty-state" style="display:none;">
+        <h3>Aucune donnée à afficher</h3>
+        <p>Commence par importer ton fichier TikTok Shop dans <strong>Import données</strong>.</p>
+        <button class="btn btn-primary" style="margin-top:18px;" onclick="goPage('import')">Importer un fichier</button>
+      </div>
+
+      <div id="dashContent">
+        <!-- KPI Grid -->
+        <div class="kpi-grid" id="kpiGrid"></div>
+
+        <!-- Charts -->
+        <div style="display:grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px;">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Évolution du chiffre d'affaires</div>
+                <div class="card-sub">CA brut par mois — source TikTok Shop</div>
+              </div>
+            </div>
+            <div class="chart-container"><canvas id="chartCA"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Répartition des charges</div>
+                <div class="card-sub">% du CA net</div>
+              </div>
+            </div>
+            <div class="chart-container"><canvas id="chartChargesPie"></canvas></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Top produits</div>
+              <div class="card-sub">Produits les plus vendus sur la période</div>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="data" id="topProductsTable">
+              <thead>
+                <tr>
+                  <th>Produit</th>
+                  <th class="num">Qté vendue</th>
+                  <th class="num">CA brut</th>
+                  <th class="num">CA net</th>
+                  <th class="num">Coût marchand.</th>
+                  <th class="num">Marge brute</th>
+                  <th class="num">% Marge</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Décomposition CA + Réconciliation comptable -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div class="card">
+            <div class="card-title">Décomposition du CA</div>
+            <div class="card-sub">Selon la méthodologie comptable</div>
+            <table class="data" id="caBreakdownTable" style="margin-top:8px;">
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="card">
+            <div class="card-title">Réconciliation TikTok</div>
+            <div class="card-sub">Cohérence CA Net TTC + Fees = Settlement</div>
+            <table class="data" id="reconciliationTable" style="margin-top:8px;">
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PAGE IMPORT ===== -->
+    <section class="page" data-page="import">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Import des <em>données</em></h1>
+          <div class="page-sub">Fichiers TikTok Shop (Income export, format .xlsx)</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="dropzone" id="dropzoneIncome">
+          <div class="file-icon">⤓</div>
+          <h3>Glisser-déposer un fichier income TikTok Shop</h3>
+          <p>ou clique pour parcourir · formats acceptés : .xlsx, .csv</p>
+          <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">Choisir un fichier</button>
+          <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Historique des imports</div>
+        <div class="card-sub">Liste des fichiers déjà chargés (déduplication par Statement ID)</div>
+        <div class="table-wrap">
+          <table class="data" id="importsTable">
+            <thead>
+              <tr>
+                <th>Fichier</th>
+                <th>Date import</th>
+                <th class="num">Lignes</th>
+                <th class="num">Période</th>
+                <th class="num">CA brut</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div id="importsEmpty" class="empty-state" style="display:none;">
+          <p>Aucun fichier importé pour le moment.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PAGE CATALOGUE ===== -->
+    <section class="page" data-page="catalogue">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Catalogue & <em>coûts</em></h1>
+          <div class="page-sub" id="catSub">Coût d'achat HT par produit, avec overrides possibles par variante</div>
+        </div>
+        <div class="toolbar">
+          <input type="text" class="input input-search" id="catSearch" placeholder="Rechercher…">
+          <button class="btn btn-ghost btn-sm" onclick="exportCatalogue()">Exporter Excel</button>
+          <button class="btn btn-primary btn-sm" onclick="document.getElementById('catImport').click()">Importer Excel</button>
+          <input type="file" id="catImport" accept=".xlsx" style="display:none;">
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px;">
+        <div style="display:flex; gap:24px; align-items:center; flex-wrap:wrap;">
+          <div><span class="cell-muted" style="font-size:11px;text-transform:uppercase;letter-spacing:0.6px;font-weight:600;">Produits / variantes</span><div style="font-family:var(--serif);font-size:22px;font-weight:600;" id="catCount">0</div></div>
+          <div><span class="cell-muted" style="font-size:11px;text-transform:uppercase;letter-spacing:0.6px;font-weight:600;">Couverture</span><div style="font-family:var(--serif);font-size:22px;font-weight:600;color:var(--good);" id="catFilled">0</div></div>
+          <div><span class="cell-muted" style="font-size:11px;text-transform:uppercase;letter-spacing:0.6px;font-weight:600;">Qté sans coût</span><div style="font-family:var(--serif);font-size:22px;font-weight:600;color:var(--warn);" id="catEmpty">0</div></div>
+        </div>
+      </div>
+
+      <!-- Coûts par produit (principal) -->
+      <div class="card">
+        <div class="card-title">Coûts d'achat HT par produit</div>
+        <div class="card-sub">Prix grossiste appliqué à toutes les variantes d'un même produit · Format Excel attendu : colonne <code>Product name</code> + colonne <code>Prix HT</code></div>
+        <div class="table-wrap" style="margin-top:14px;">
+          <table class="data" id="catProductTable">
+            <thead>
+              <tr>
+                <th>Produit</th>
+                <th class="num">Variantes</th>
+                <th class="num">Qté vendue</th>
+                <th class="num">Prix vente moyen HT</th>
+                <th class="num">Coût d'achat HT</th>
+                <th class="num">Marge unitaire</th>
+                <th class="num">% Marge</th>
+                <th class="num">COGS total</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div id="catEmptyState" class="empty-state" style="display:none;">
+          <h3>Aucun produit détecté</h3>
+          <p>Importe d'abord un fichier TikTok Shop dans l'onglet <strong>Import données</strong>.</p>
+        </div>
+      </div>
+
+      <!-- Overrides par variante (secondaire, optionnel) -->
+      <details class="card" style="padding:0; margin-top:20px;">
+        <summary style="padding:18px 24px; cursor:pointer; font-family:var(--serif); font-size:18px; font-weight:500; color:var(--ink-900); list-style:none; display:flex; justify-content:space-between; align-items:center;">
+          <span>Overrides par variante <span class="cell-muted" style="font-size:13px; font-weight:400; font-family:var(--sans);">— optionnel, pour les cas particuliers</span></span>
+          <div class="filter-group" onclick="event.stopPropagation();">
+            <button class="filter-btn active" data-cat-filter="overrides">Avec override</button>
+            <button class="filter-btn" data-cat-filter="missing">Sans coût (orphelins)</button>
+          </div>
+        </summary>
+        <div style="padding:0 24px 24px;">
+          <p class="card-sub" style="margin-bottom:14px;">Permet de définir un coût spécifique pour une variante particulière (couleur/taille). Si vide, le coût par produit s'applique.</p>
+          <div class="table-wrap">
+            <table class="data" id="catVariantTable">
+              <thead>
+                <tr>
+                  <th>Produit</th>
+                  <th>Variante</th>
+                  <th class="num">Qté</th>
+                  <th class="num">Prix moyen HT</th>
+                  <th class="num">Coût produit</th>
+                  <th class="num">Override variante</th>
+                  <th class="num">Marge unitaire</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ===== PAGE CHARGES ===== -->
+    <section class="page" data-page="charges">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Charges <em>TikTok</em></h1>
+          <div class="page-sub">Détail des frais prélevés par TikTok Shop</div>
+        </div>
+        <div class="toolbar">
+          <div class="filter-group" id="yearFilterCharges"></div>
+        </div>
+      </div>
+
+      <div class="charges-grid" id="chargesGrid"></div>
+
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Évolution mensuelle des charges</div>
+            <div class="card-sub">Détail par catégorie</div>
+          </div>
+        </div>
+        <div class="chart-container tall"><canvas id="chartChargesEvolution"></canvas></div>
+      </div>
+    </section>
+
+    <!-- ===== PAGE PRODUITS ===== -->
+    <section class="page" data-page="produits">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Analyse <em>produits</em></h1>
+          <div class="page-sub">Performance et rentabilité par produit</div>
+        </div>
+        <div class="toolbar">
+          <div class="filter-group" id="yearFilterProd"></div>
+          <input type="text" class="input input-search" id="prodSearch" placeholder="Rechercher un produit…">
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table class="data" id="produitsTable">
+            <thead>
+              <tr>
+                <th>Produit</th>
+                <th class="num">Variantes</th>
+                <th class="num">Qté vendue</th>
+                <th class="num">CA brut</th>
+                <th class="num">CA net</th>
+                <th class="num">Coût marchand.</th>
+                <th class="num">Marge brute</th>
+                <th class="num">% Marge</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PAGE COMMANDES ===== -->
+    <section class="page" data-page="commandes">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Liste des <em>commandes</em></h1>
+          <div class="page-sub" id="cmdSub">Détail ligne à ligne</div>
+        </div>
+        <div class="toolbar">
+          <div class="filter-group" id="yearFilterCmd"></div>
+          <input type="text" class="input input-search" id="cmdSearch" placeholder="Rechercher (produit, SKU, ID)…">
+          <button class="btn btn-ghost btn-sm" onclick="exportCommandes()">Exporter Excel</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table class="data" id="commandesTable">
+            <thead>
+              <tr>
+                <th>Date statement</th>
+                <th>Type</th>
+                <th>Order ID</th>
+                <th>Produit</th>
+                <th>Variante</th>
+                <th class="num">Qté</th>
+                <th class="num">CA brut</th>
+                <th class="num">Net sales</th>
+                <th class="num">Settlement</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div id="cmdPagination" style="display:flex;justify-content:space-between;align-items:center;padding:16px 0 0;font-size:12px;color:var(--ink-500);">
+          <span id="cmdInfo"></span>
+          <div>
+            <button class="btn btn-ghost btn-sm" id="cmdPrev">← Précédent</button>
+            <button class="btn btn-ghost btn-sm" id="cmdNext">Suivant →</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PAGE PARAMÈTRES ===== -->
+    <section class="page" data-page="parametres">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Para<em>mètres</em></h1>
+          <div class="page-sub">Configuration TVA, persistance, réinitialisation</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Régime TVA</div>
+        <div class="card-sub">Détermine comment l'app calcule le CA HT à partir des montants TikTok</div>
+        <div style="display:flex; flex-direction:column; gap:10px; margin-top:14px;">
+          <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;padding:12px;border-radius:var(--radius-sm);border:1px solid var(--ink-100);">
+            <input type="radio" name="vatMode" value="ht_already" id="vatHt" style="margin-top:3px;">
+            <div>
+              <div style="font-weight:600;">CA TikTok déjà HT (autoliquidation)</div>
+              <div style="font-size:12px;color:var(--ink-500);">TikTok Shop applique l'autoliquidation de TVA — les montants reçus sont nets de TVA. Pas de division.</div>
+            </div>
+          </label>
+          <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;padding:12px;border-radius:var(--radius-sm);border:1px solid var(--ink-100);">
+            <input type="radio" name="vatMode" value="ttc_20" id="vatTtc" checked style="margin-top:3px;">
+            <div>
+              <div style="font-weight:600;">CA TikTok TTC (TVA 20%)</div>
+              <div style="font-size:12px;color:var(--ink-500);">Les montants sont TTC, on divise par 1.20 pour obtenir le HT.</div>
+            </div>
+          </label>
+          <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;padding:12px;border-radius:var(--radius-sm);border:1px solid var(--ink-100);">
+            <input type="radio" name="vatMode" value="custom" id="vatCustom" style="margin-top:3px;">
+            <div style="flex:1;">
+              <div style="font-weight:600;">Taux personnalisé</div>
+              <div style="font-size:12px;color:var(--ink-500);margin-bottom:6px;">Pour les cas spécifiques (export, taux réduit).</div>
+              <input type="number" class="input" id="vatCustomRate" step="0.5" min="0" max="30" placeholder="ex: 20" style="width:100px;"> %
+            </div>
+          </label>
+        </div>
+        <button class="btn btn-primary" style="margin-top:16px;" onclick="saveVatSettings()">Enregistrer</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Coût marchandises</div>
+        <div class="card-sub">Comportement du calcul de COGS pour les commandes remboursées</div>
+        <div style="margin-top:14px;">
+          <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;padding:12px;border-radius:var(--radius-sm);border:1px solid var(--ink-100);">
+            <input type="checkbox" id="excludeRefunded" checked style="margin-top:3px;">
+            <div>
+              <div style="font-weight:600;">Exclure les commandes remboursées du COGS</div>
+              <div style="font-size:12px;color:var(--ink-500);">Quand une commande est remboursée (Net sales = 0), la marchandise est généralement renvoyée par la cliente. Son coût d'achat n'est donc pas compté dans le coût des marchandises vendues. Désactive si tes clients gardent les produits.</div>
+            </div>
+          </label>
+        </div>
+        <button class="btn btn-primary" style="margin-top:16px;" onclick="saveCogsSettings()">Enregistrer</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Compte</div>
+        <div class="card-sub">Tu es connecté et tes données sont synchronisées avec le cloud</div>
+        <div style="margin-top:14px; font-size:13px;" id="accountInfo"></div>
+        <div style="margin-top:18px;">
+          <button class="btn btn-ghost" onclick="logout()">Se déconnecter</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Stockage & sauvegarde</div>
+        <div class="card-sub">Sync temps réel avec Firebase Firestore · cache local pour mode hors-ligne</div>
+        <div style="margin-top:14px; font-size:13px;" id="storageInfo"></div>
+        <div style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="forceFullSync()" title="Repousse toutes tes données vers le cloud — utile si l'app ne s'affiche pas sur un autre appareil">⟳ Forcer synchro complète</button>
+          <button class="btn btn-ghost" onclick="exportFullBackup()">Exporter (.json)</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('restoreInput').click()">Importer (.json)</button>
+          <input type="file" id="restoreInput" accept=".json" style="display:none;">
+          <button class="btn btn-ghost" onclick="restoreFromBackupSlot()" title="Restaure l'état juste avant le dernier import/sync (si tu as perdu des données)">↺ Restaurer sauvegarde auto</button>
+          <button class="btn btn-danger" onclick="resetAll()">Tout réinitialiser (cloud)</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">À propos</div>
+        <div style="font-size:13px; line-height:1.7; color:var(--ink-700);">
+          <p><strong>TikPerf By Lou</strong> · v1.4.4 · Mai 2026</p>
+          <p>App PWA pour analyser les performances TikTok Shop : marges, charges, coûts d'achat, top produits, avec sync multi-appareils via Firebase.</p>
+          <p style="margin-top:8px;">Source : exports Income TikTok Shop (.xlsx). Données chiffrées et privées à ton compte.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   TikPerf By Lou — v1.4.4
+   PWA + Firebase Firestore sync + Auth
+   ============================================================ */
+
+const LS_KEY = 'tikperf_bylou_v1';
+const LS_KEY_BACKUP = 'tikperf_bylou_v1_backup';     // Always-on rolling backup (last good state)
+const LS_KEY_PRE_CLOUD = 'tikperf_bylou_v1_pre_cloud'; // Snapshot of state before cloud overwrites it
+const FMT = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const FMT0 = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
+const FMT_PCT = (v) => (v === null || isNaN(v) || !isFinite(v)) ? '—' : (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
+const money = (v, opts = {}) => {
+  if (v === null || v === undefined || isNaN(v)) return '—';
+  const sign = v < 0 ? '-' : '';
+  return sign + FMT.format(Math.abs(v)) + (opts.symbol === false ? '' : ' €');
+};
+
+/* ============ FIREBASE CONFIG ============
+   ⚠ À REMPLACER par la config de TON projet Firebase.
+   Récupère-la dans Console Firebase → Paramètres du projet → Vos applications → Web.
+   Ces clés sont publiques (front-end) — la sécurité vient des règles Firestore.
+============================================ */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDMZg2C0DGJI--z6qGQDblyqWjg10saSEY",
+  authDomain: "tikperf-bylou.firebaseapp.com",
+  projectId: "tikperf-bylou",
+  storageBucket: "tikperf-bylou.firebasestorage.app",
+  messagingSenderId: "215408135503",
+  appId: "1:215408135503:web:f31300cf1ea2a6f53f093a"
+};
+
+/* ============ STATE ============ */
+const state = {
+  orders: [],
+  imports: [],
+  catalogue: { byProduct: {}, byVariant: {} },
+  settings: { vatMode: 'ttc_20', vatCustomRate: 20, excludeRefundedFromCogs: true },
+  ui: {
+    currentPage: 'dashboard',
+    yearFilter: 'all',
+    vatDisplay: 'ht',
+    catFilter: 'overrides',
+    catSearch: '',
+    prodSearch: '',
+    cmdSearch: '',
+    cmdPage: 0,
+    cmdPageSize: 50,
+    sidebarOpen: false
+  },
+  cloud: {
+    enabled: false,        // becomes true once Firebase + user are ready
+    user: null,            // {uid, email}
+    syncStatus: 'offline', // 'offline' | 'syncing' | 'synced' | 'error'
+    lastSync: null,
+    unsubscribe: null,     // Firestore listener unsubscribe fn
+    pendingSave: false,    // debounce flag
+    saveTimer: null
+  }
+};
+
+const PAGE_SIZE = 50;
+let charts = {};
+let fb = null; // {app, auth, db, modules}
+
+/* ============ FIREBASE BOOT ============ */
+function bootFirebase() {
+  if (!window.firebaseModules) {
+    setTimeout(bootFirebase, 100);
+    return;
+  }
+  // Show login screen by default while waiting for auth state
+  showLogin();
+  const M = window.firebaseModules;
+  try {
+    const app = M.initializeApp(FIREBASE_CONFIG);
+    const auth = M.getAuth(app);
+    const db = M.getFirestore(app);
+    M.enableIndexedDbPersistence(db).catch((err) => {
+      console.warn('Firestore offline persistence not enabled:', err.code);
+    });
+    fb = { app, auth, db, M };
+
+    M.onAuthStateChanged(auth, (user) => {
+      if (user) {
+        state.cloud.user = { uid: user.uid, email: user.email };
+        showApp();
+        startCloudSync();
+      } else {
+        state.cloud.user = null;
+        state.cloud.enabled = false;
+        stopCloudSync();
+        showLogin();
+      }
+    });
+  } catch (err) {
+    console.error('Firebase init failed:', err);
+    setSyncStatus('error');
+    showLogin();
+    document.getElementById('loginError').textContent = 'Erreur Firebase : ' + err.message;
+  }
+}
+
+function showLogin() {
+  document.getElementById('loginScreen').style.display = '';
+  document.getElementById('topbar').style.display = 'none';
+  document.getElementById('mainContent').style.display = 'none';
+}
+
+function showApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('topbar').style.display = '';
+  document.getElementById('mainContent').style.display = '';
+  // Show user chip
+  const chip = document.getElementById('userChip');
+  if (chip && state.cloud.user) chip.textContent = state.cloud.user.email;
+}
+
+async function attemptLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  const btn = document.getElementById('loginSubmit');
+  errEl.textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'Connexion…';
+  try {
+    if (!fb) throw new Error("Firebase pas encore prêt — réessaie dans 1s");
+    await fb.M.signInWithEmailAndPassword(fb.auth, email, password);
+    // onAuthStateChanged will handle the transition
+  } catch (err) {
+    const msgs = {
+      'auth/invalid-credential': 'Email ou mot de passe incorrect',
+      'auth/invalid-email': 'Email invalide',
+      'auth/user-not-found': 'Utilisateur non trouvé',
+      'auth/wrong-password': 'Mot de passe incorrect',
+      'auth/too-many-requests': 'Trop de tentatives, réessaie dans quelques minutes',
+      'auth/network-request-failed': 'Pas de connexion Internet'
+    };
+    errEl.textContent = msgs[err.code] || ('Erreur : ' + (err.message || err.code));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Se connecter';
+  }
+}
+
+async function logout() {
+  if (!confirm('Se déconnecter ?')) return;
+  try {
+    await fb.M.signOut(fb.auth);
+  } catch (err) {
+    toast('Erreur déconnexion: ' + err.message, 'error');
+  }
+}
+
+/* ============ SYNC STATUS UI ============ */
+function setSyncStatus(status, label) {
+  state.cloud.syncStatus = status;
+  const badge = document.getElementById('syncBadge');
+  const lbl = document.getElementById('syncLabel');
+  if (!badge || !lbl) return;
+  badge.className = 'sync-badge ' + status;
+  const labels = {
+    offline: 'Hors ligne',
+    syncing: 'Synchronisation…',
+    synced: 'Synchronisé',
+    error: 'Erreur sync'
+  };
+  lbl.textContent = label || labels[status];
+}
+
+/* ============ CLOUD SYNC ============ */
+function userDocRef() {
+  if (!fb || !state.cloud.user) return null;
+  return fb.M.doc(fb.db, 'users', state.cloud.user.uid);
+}
+
+/* Smart merge: combine two sets of orders, deduplicating by (Statement+Order+SKU).
+   Returns {orders, conflicts} where conflicts counts duplicates that differed. */
+function mergeOrders(a, b) {
+  const keyOf = (o) => `${o['Statement ID']}|${o['Order/adjustment ID']}|${o['SKU ID']}`;
+  const map = new Map();
+  let conflicts = 0;
+  for (const o of a) map.set(keyOf(o), o);
+  for (const o of b) {
+    const k = keyOf(o);
+    if (map.has(k)) conflicts++;
+    map.set(k, o); // last write wins per key, but conflicts are rare since data is settled
+  }
+  return { orders: Array.from(map.values()), conflicts };
+}
+
+function mergeImports(a, b) {
+  // Imports are append-only history. Dedup by (filename + importedAt).
+  const seen = new Set();
+  const out = [];
+  for (const arr of [a, b]) {
+    for (const imp of arr) {
+      const k = `${imp.filename}|${imp.importedAt}`;
+      if (!seen.has(k)) { seen.add(k); out.push(imp); }
+    }
+  }
+  return out.sort((x, y) => (x.importedAt || '').localeCompare(y.importedAt || ''));
+}
+
+function mergeCatalogue(a, b) {
+  // For costs: b (newer) wins, but a's entries are preserved if not in b.
+  const A = normalizeCatalogue(a);
+  const B = normalizeCatalogue(b);
+  return {
+    byProduct: { ...A.byProduct, ...B.byProduct },
+    byVariant: { ...A.byVariant, ...B.byVariant }
+  };
+}
+
+/* Extract month key (YYYY-MM) from an order row */
+function orderMonthKey(o) {
+  const d = String(o['Statement date'] || o['Order created date'] || '').trim();
+  if (!d || d === '/') return 'unknown';
+  // Format expected: 2026/04/15 or 2026-04-15
+  const m = d.match(/(\d{4})[\/\-](\d{1,2})/);
+  if (!m) return 'unknown';
+  return `${m[1]}-${m[2].padStart(2, '0')}`;
+}
+
+/* Group orders by month for multi-document Firestore writes */
+function groupOrdersByMonth(orders) {
+  const byMonth = {};
+  for (const o of orders) {
+    const k = orderMonthKey(o);
+    if (!byMonth[k]) byMonth[k] = [];
+    byMonth[k].push(o);
+  }
+  return byMonth;
+}
+
+/* Reference helpers */
+function userDocRefMain() {
+  if (!fb || !state.cloud.user) return null;
+  return fb.M.doc(fb.db, 'users', state.cloud.user.uid);
+}
+function userMonthDocRef(monthKey) {
+  if (!fb || !state.cloud.user) return null;
+  return fb.M.doc(fb.db, 'users', state.cloud.user.uid, 'months', monthKey);
+}
+function userMonthsCollectionRef() {
+  if (!fb || !state.cloud.user) return null;
+  return fb.M.collection(fb.db, 'users', state.cloud.user.uid, 'months');
+}
+
+async function startCloudSync() {
+  if (!fb || !state.cloud.user) return;
+  state.cloud.enabled = true;
+  setSyncStatus('syncing');
+
+  try {
+    // 1) Load cloud data: main doc (settings, catalogue, imports list) + all month subdocs
+    const mainRef = userDocRefMain();
+    const monthsRef = userMonthsCollectionRef();
+
+    const [mainSnap, monthsSnap] = await Promise.all([
+      fb.M.getDoc(mainRef),
+      fb.M.getDocs(monthsRef)
+    ]);
+
+    // Detect legacy v1 schema: main doc has orders directly (1 big doc)
+    let legacyOrders = null;
+    if (mainSnap.exists()) {
+      const m = mainSnap.data();
+      if (m.orders && Array.isArray(m.orders) && m.orders.length > 0 && monthsSnap.empty) {
+        console.log(`Detected legacy v1 schema with ${m.orders.length} orders — migrating to multi-doc layout`);
+        legacyOrders = m.orders;
+      }
+    }
+
+    const cloudExists = mainSnap.exists() || !monthsSnap.empty;
+    const cloudMain = mainSnap.exists() ? mainSnap.data() : null;
+    const cloudOrders = legacyOrders || [];
+    monthsSnap.forEach(d => {
+      const data = d.data();
+      if (data.orders) cloudOrders.push(...data.orders);
+    });
+    const cloudData = cloudExists ? {
+      orders: cloudOrders,
+      imports: (cloudMain && cloudMain.imports) || [],
+      catalogue: (cloudMain && cloudMain.catalogue) || { byProduct: {}, byVariant: {} },
+      settings: (cloudMain && cloudMain.settings) || {}
+    } : null;
+
+    const localRaw = localStorage.getItem(LS_KEY);
+    const localData = localRaw ? JSON.parse(localRaw) : null;
+
+    if (cloudExists && localData) {
+      // Both exist → MERGE to prevent data loss
+      const { orders: mergedOrders } = mergeOrders(
+        cloudData.orders || [],
+        localData.orders || []
+      );
+      state.orders = mergedOrders;
+      state.imports = mergeImports(cloudData.imports || [], localData.imports || []);
+      state.catalogue = mergeCatalogue(cloudData.catalogue, localData.catalogue);
+      state.settings = { ...state.settings, ...(localData.settings || {}), ...(cloudData.settings || {}) };
+
+      const cloudCount = (cloudData.orders || []).length;
+      const localCount = (localData.orders || []).length;
+      if (mergedOrders.length > Math.max(cloudCount, localCount)) {
+        toast(`✓ Fusion : ${cloudCount} (cloud) + ${localCount} (local) → ${mergedOrders.length} lignes`, 'success');
+        await pushToCloud();
+      } else {
+        setSyncStatus('synced');
+      }
+    } else if (cloudExists) {
+      applyCloudData(cloudData);
+      setSyncStatus('synced');
+    } else if (localData) {
+      // No cloud yet — push local to cloud
+      Object.assign(state, {
+        orders: localData.orders || [],
+        imports: localData.imports || [],
+        catalogue: normalizeCatalogue(localData.catalogue),
+        settings: { ...state.settings, ...(localData.settings || {}) }
+      });
+      await pushToCloud();
+    } else {
+      // Truly empty — first ever launch
+      await pushToCloud();
+    }
+
+    // 2) Subscribe to real-time updates on main doc (settings/catalogue/imports list)
+    // We don't subscribe to all monthly docs to avoid massive listener overhead;
+    // months change on import only, which is a known event.
+    state.cloud.unsubscribe = fb.M.onSnapshot(mainRef, (snap) => {
+      if (!snap.exists()) return;
+      if (snap.metadata.hasPendingWrites) return;
+
+      const remote = snap.data();
+      const remoteImports = remote.imports || [];
+
+      // If remote imports list shows fewer imports than we know locally, conflict
+      if (remoteImports.length < state.imports.length && state.imports.length > 0) {
+        const now = Date.now();
+        if (state.cloud.lastMergeTs && (now - state.cloud.lastMergeTs) < 10000) return;
+        const mergedImports = mergeImports(remoteImports, state.imports);
+        if (mergedImports.length === remoteImports.length) return; // nothing new
+        state.cloud.lastMergeTs = now;
+        state.imports = mergedImports;
+        state.catalogue = mergeCatalogue(remote.catalogue, state.catalogue);
+        state.settings = { ...state.settings, ...(remote.settings || {}) };
+        writeLocalCache();
+        pushToCloud();
+        toast('⚠ Conflit détecté — données fusionnées', 'warn');
+      } else {
+        // Accept remote settings/catalogue/imports list, keep our orders (months are separate)
+        state.imports = remoteImports;
+        state.catalogue = normalizeCatalogue(remote.catalogue);
+        state.settings = { ...state.settings, ...(remote.settings || {}) };
+        writeLocalCache();
+      }
+      setSyncStatus('synced');
+      renderCurrentPage();
+    }, (err) => {
+      console.error('Firestore listen error:', err);
+      setSyncStatus('error');
+    });
+
+    renderCurrentPage();
+  } catch (err) {
+    console.error('Initial sync failed:', err);
+    setSyncStatus('error', 'Erreur : ' + err.message);
+    loadFromLocalCache();
+    renderCurrentPage();
+  }
+}
+
+function stopCloudSync() {
+  if (state.cloud.unsubscribe) {
+    state.cloud.unsubscribe();
+    state.cloud.unsubscribe = null;
+  }
+  state.cloud.enabled = false;
+  setSyncStatus('offline');
+}
+
+function normalizeCatalogue(c) {
+  if (!c) return { byProduct: {}, byVariant: {} };
+  if (c.byProduct || c.byVariant) {
+    return { byProduct: c.byProduct || {}, byVariant: c.byVariant || {} };
+  }
+  // Legacy flat format
+  const byVariant = {};
+  Object.entries(c).forEach(([k, v]) => {
+    if (v && typeof v === 'object' && v.cost > 0) byVariant[k] = v.cost;
+  });
+  return { byProduct: {}, byVariant };
+}
+
+function applyCloudData(data) {
+  state.orders = data.orders || [];
+  state.imports = data.imports || [];
+  state.catalogue = normalizeCatalogue(data.catalogue);
+  state.settings = { ...state.settings, ...(data.settings || {}) };
+  // Always write to local cache for offline access
+  writeLocalCache();
+  state.cloud.lastSync = new Date().toISOString();
+}
+
+function loadFromLocalCache() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    state.orders = data.orders || [];
+    state.imports = data.imports || [];
+    state.catalogue = normalizeCatalogue(data.catalogue);
+    state.settings = { ...state.settings, ...(data.settings || {}) };
+  } catch (e) {
+    console.error('Local cache load failed:', e);
+  }
+}
+
+function writeLocalCache() {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      orders: state.orders,
+      imports: state.imports,
+      catalogue: state.catalogue,
+      settings: state.settings,
+      cachedAt: new Date().toISOString()
+    }));
+  } catch (e) {
+    console.warn('Local cache write failed:', e);
+  }
+}
+
+async function restoreFromBackupSlot() {
+  const backup = localStorage.getItem(LS_KEY_BACKUP);
+  if (!backup) {
+    toast('Aucune sauvegarde automatique disponible', 'error');
+    return;
+  }
+  try {
+    const data = JSON.parse(backup);
+    const ordersCount = (data.orders || []).length;
+    const importsCount = (data.imports || []).length;
+    if (!confirm(`Restaurer la sauvegarde automatique précédente ?\n\n• ${ordersCount} ligne(s) de commande\n• ${importsCount} fichier(s) importé(s)\n\nL'état actuel sera fusionné avec la sauvegarde (les nouvelles données seront conservées).`)) {
+      return;
+    }
+    // Merge: keep current + backup, dedup
+    const { orders: merged } = mergeOrders(state.orders, data.orders || []);
+    state.orders = merged;
+    state.imports = mergeImports(state.imports, data.imports || []);
+    state.catalogue = mergeCatalogue(state.catalogue, data.catalogue);
+    state.settings = { ...state.settings, ...(data.settings || {}) };
+    saveState();
+    if (state.cloud.enabled) await pushToCloud();
+    renderCurrentPage();
+    toast(`✓ Sauvegarde fusionnée — ${state.orders.length} lignes au total`, 'success');
+  } catch (err) {
+    toast('Erreur restauration : ' + err.message, 'error');
+  }
+}
+
+/* Force a full re-sync to the cloud — useful if data appears missing on other devices.
+   Pushes every month subdocument explicitly. */
+async function forceFullSync() {
+  if (!fb || !state.cloud.user) {
+    toast('Pas connecté au cloud', 'error');
+    return;
+  }
+  if (!confirm(`Forcer la synchronisation complète vers le cloud ?\n\n${state.orders.length} lignes de commandes seront poussées vers Firestore. Utile si tes données n'apparaissent pas sur un autre appareil.`)) {
+    return;
+  }
+  setSyncStatus('syncing');
+  try {
+    const byMonth = groupOrdersByMonth(state.orders);
+    const monthKeys = Object.keys(byMonth);
+    console.log('Force sync — months:', monthKeys);
+
+    // 1) Push main doc
+    const mainRef = userDocRefMain();
+    await fb.M.setDoc(mainRef, {
+      catalogue: state.catalogue,
+      imports: state.imports,
+      settings: state.settings,
+      monthKeys,
+      updatedAt: fb.M.serverTimestamp(),
+      schemaVersion: 2
+    });
+    console.log('✓ Main doc pushed');
+
+    // 2) Push each month subdoc one by one
+    let pushed = 0;
+    const errors = [];
+    for (const key of monthKeys) {
+      try {
+        const ref = userMonthDocRef(key);
+        await fb.M.setDoc(ref, { orders: byMonth[key], month: key });
+        console.log(`✓ ${key}: ${byMonth[key].length} orders`);
+        pushed++;
+      } catch (e) {
+        console.error(`✗ ${key}:`, e);
+        errors.push(`${key}: ${e.message}`);
+      }
+    }
+
+    setSyncStatus('synced');
+    state.cloud.lastSync = new Date().toISOString();
+    if (errors.length > 0) {
+      toast(`⚠ ${pushed}/${monthKeys.length} mois synchronisés. Erreurs : ${errors.join(' | ')}`, 'error');
+    } else {
+      toast(`✓ Synchronisation forcée réussie — ${pushed} mois, ${state.orders.length} lignes au total`, 'success');
+    }
+  } catch (err) {
+    console.error('Force sync failed:', err);
+    setSyncStatus('error');
+    toast('Échec : ' + err.message, 'error');
+  }
+}
+
+async function pushToCloud() {
+  if (!fb || !state.cloud.user) return;
+  const mainRef = userDocRefMain();
+  if (!mainRef) return;
+
+  // Rolling backup: keep last known-good state before pushing
+  try {
+    const current = localStorage.getItem(LS_KEY);
+    if (current) localStorage.setItem(LS_KEY_BACKUP, current);
+  } catch (e) { /* quota or unavailable, non-fatal */ }
+
+  try {
+    setSyncStatus('syncing');
+
+    // Strategy: split orders by month into subdocs, keep metadata in main doc.
+    // This avoids the 1 MB Firestore document limit.
+    const byMonth = groupOrdersByMonth(state.orders);
+    const monthKeys = Object.keys(byMonth);
+
+    // 1) Push main doc (small): catalogue, imports list, settings, sync metadata
+    await fb.M.setDoc(mainRef, {
+      catalogue: state.catalogue,
+      imports: state.imports,
+      settings: state.settings,
+      monthKeys,            // index of which months exist
+      updatedAt: fb.M.serverTimestamp(),
+      schemaVersion: 2      // multi-doc layout
+    });
+
+    // 2) Push each month subdoc individually (simpler & more robust than writeBatch).
+    // Orders are settled, writes are rare, so individual calls are fine for <100 months.
+    const monthErrors = [];
+    for (const key of monthKeys) {
+      const ref = userMonthDocRef(key);
+      try {
+        await fb.M.setDoc(ref, { orders: byMonth[key], month: key });
+        console.log(`✓ Pushed month ${key} (${byMonth[key].length} orders)`);
+      } catch (e) {
+        console.error(`✗ Failed month ${key}:`, e);
+        monthErrors.push({ key, error: e.message });
+      }
+    }
+    if (monthErrors.length > 0) {
+      throw new Error(`${monthErrors.length} mois ont échoué : ${monthErrors.map(e => e.key).join(', ')}`);
+    }
+
+    // 3) Clean up any leftover month docs that no longer have orders
+    const existingMonthsSnap = await fb.M.getDocs(userMonthsCollectionRef());
+    const deletions = [];
+    existingMonthsSnap.forEach(d => {
+      if (!monthKeys.includes(d.id)) {
+        deletions.push(fb.M.deleteDoc(userMonthDocRef(d.id)));
+      }
+    });
+    if (deletions.length) await Promise.all(deletions);
+
+    setSyncStatus('synced');
+    state.cloud.lastSync = new Date().toISOString();
+  } catch (err) {
+    console.error('Push failed:', err);
+    setSyncStatus('error', err.code === 'unavailable' ? 'Hors ligne' : 'Erreur');
+  }
+}
+
+/* ============ PERSISTENCE (debounced save) ============ */
+function saveState() {
+  // Always write local cache immediately
+  writeLocalCache();
+  updateStorageInfo();
+  // Debounced push to cloud (avoid flooding Firestore on rapid edits like cost entry)
+  if (state.cloud.enabled) {
+    if (state.cloud.saveTimer) clearTimeout(state.cloud.saveTimer);
+    setSyncStatus('syncing');
+    state.cloud.saveTimer = setTimeout(() => {
+      pushToCloud();
+      state.cloud.saveTimer = null;
+    }, 800);
+  }
+}
+
+function loadState() {
+  // Only used as fallback before Firebase is ready or when offline
+  loadFromLocalCache();
+}
+
+function updateStorageInfo() {
+  const el = document.getElementById('storageInfo');
+  if (el) {
+    const used = new Blob([localStorage.getItem(LS_KEY) || '']).size;
+    const kb = (used / 1024).toFixed(1);
+    const lastSync = state.cloud.lastSync
+      ? new Date(state.cloud.lastSync).toLocaleString('fr-FR')
+      : '—';
+    el.innerHTML = `
+      <strong>${state.orders.length}</strong> lignes de commande ·
+      <strong>${state.imports.length}</strong> fichier(s) importé(s) ·
+      <strong>${Object.keys(state.catalogue.byProduct).length}</strong> produit(s) + <strong>${Object.keys(state.catalogue.byVariant).length}</strong> override(s) variante<br>
+      <span class="cell-muted" style="font-size:11px;">Cache local : ${kb} KB · Dernière synchro : ${lastSync}</span>
+    `;
+  }
+
+  const acc = document.getElementById('accountInfo');
+  if (acc) {
+    if (state.cloud.user) {
+      acc.innerHTML = `
+        Connecté en tant que <strong>${escapeHtml(state.cloud.user.email)}</strong><br>
+        <span class="cell-muted" style="font-size:11px;">UID: ${state.cloud.user.uid.slice(0,12)}… · État : <span class="sync-badge ${state.cloud.syncStatus}" style="margin-left:4px;"><span class="sync-dot"></span>${state.cloud.syncStatus}</span></span>
+      `;
+    } else {
+      acc.innerHTML = '<span class="cell-muted">Non connecté</span>';
+    }
+  }
+}
+
+/* ============ TOAST ============ */
+let toastTimer;
+function toast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = 'toast'; }, 3500);
+}
+
+/* ============ NAV ============ */
+function goPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.dataset.page === name));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === name));
+  state.ui.currentPage = name;
+  renderCurrentPage();
+}
+
+function renderCurrentPage() {
+  const p = state.ui.currentPage;
+  if (p === 'dashboard') renderDashboard();
+  if (p === 'import') renderImports();
+  if (p === 'catalogue') renderCatalogue();
+  if (p === 'charges') renderCharges();
+  if (p === 'produits') renderProduits();
+  if (p === 'commandes') renderCommandes();
+  if (p === 'parametres') renderSettings();
+  updateStorageInfo();
+}
+
+/* ============ XLSX IMPORT ============ */
+function handleFile(file) {
+  if (!file) return;
+  toast('Lecture du fichier en cours…');
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, { type: 'array', cellDates: false });
+
+      const sheet = wb.SheetNames.find(s => /order details|order detail/i.test(s)) || wb.SheetNames[0];
+      const ws = wb.Sheets[sheet];
+
+      // TikTok Shop exports sometimes declare a wrong !ref (e.g. A1:DV6) while
+      // actually containing hundreds of rows. We rebuild the range from the
+      // actual cell addresses to make sure we read everything.
+      let maxRow = 0, maxCol = 0;
+      for (const k in ws) {
+        if (k.startsWith('!')) continue;
+        const m = k.match(/^([A-Z]+)(\d+)$/);
+        if (m) {
+          const r = parseInt(m[2]);
+          if (r > maxRow) maxRow = r;
+          const c = XLSX.utils.decode_col(m[1]);
+          if (c > maxCol) maxCol = c;
+        }
+      }
+      if (maxRow > 0) {
+        ws['!ref'] = XLSX.utils.encode_range({ s: { c: 0, r: 0 }, e: { c: maxCol, r: maxRow - 1 } });
+      }
+
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: '', raw: false });
+
+      if (!rows.length) { toast('Fichier vide ou format inattendu.', 'error'); return; }
+
+      // Verify expected columns
+      const sample = rows[0];
+      const required = ['Statement date', 'Statement ID', 'Type', 'Total settlement amount'];
+      const missing = required.filter(k => !(k in sample));
+      if (missing.length) {
+        toast('Format inattendu — colonnes manquantes : ' + missing.join(', '), 'error');
+        return;
+      }
+
+      // Dedup by Statement ID + Order/adjustment ID + SKU ID
+      const existingKeys = new Set(state.orders.map(o => `${o['Statement ID']}|${o['Order/adjustment ID']}|${o['SKU ID']}`));
+      let added = 0;
+      const newStatementIds = new Set();
+
+      rows.forEach(r => {
+        const k = `${r['Statement ID']}|${r['Order/adjustment ID']}|${r['SKU ID']}`;
+        if (!existingKeys.has(k)) {
+          state.orders.push(r);
+          existingKeys.add(k);
+          added++;
+        }
+        if (r['Statement ID']) newStatementIds.add(String(r['Statement ID']));
+      });
+
+      // Compute import metadata
+      const dates = rows.map(r => r['Statement date']).filter(d => d && d !== '/').sort();
+      const totalCA = rows.reduce((s, r) => s + (parseFloat(r['Subtotal before discounts']) || 0), 0);
+
+      state.imports.push({
+        filename: file.name,
+        importedAt: new Date().toISOString(),
+        rowCount: rows.length,
+        added,
+        statementIds: Array.from(newStatementIds),
+        period: dates.length ? `${dates[0]} → ${dates[dates.length - 1]}` : '—',
+        ca: totalCA
+      });
+
+      saveState();
+      toast(`✓ ${added} nouvelle(s) ligne(s) importée(s) (${rows.length - added} doublons ignorés)`, 'success');
+      renderCurrentPage();
+    } catch (err) {
+      console.error(err);
+      toast('Erreur lors de la lecture : ' + err.message, 'error');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+/* ============ FILTERING / COMPUTATION ============ */
+function getYears() {
+  const years = new Set();
+  state.orders.forEach(o => {
+    const d = o['Statement date'];
+    if (d && d !== '/') {
+      const y = String(d).slice(0, 4);
+      if (/^\d{4}$/.test(y)) years.add(y);
+    }
+  });
+  return Array.from(years).sort();
+}
+
+function filteredOrders(year = state.ui.yearFilter) {
+  if (!year || year === 'all') return state.orders;
+  return state.orders.filter(o => String(o['Statement date'] || '').startsWith(year));
+}
+
+// Convert raw TTC amount to HT or TTC depending on mode + UI choice
+function vatRate() {
+  if (state.settings.vatMode === 'ht_already') return 0;
+  if (state.settings.vatMode === 'custom') return parseFloat(state.settings.vatCustomRate || 0) / 100;
+  return 0.20;
+}
+
+// Adjust a CA amount (TTC in source) to HT or keep TTC.
+// IMPORTANT v1.1: this only applies to CA. Fees are NEVER divided (no VAT on fees per accountant).
+function adjustCA(amount) {
+  const rate = vatRate();
+  if (state.ui.vatDisplay === 'ttc') {
+    if (state.settings.vatMode === 'ht_already' && rate === 0) {
+      return amount * 1.20; // source is HT, gross up for TTC display
+    }
+    return amount; // source is TTC
+  }
+  // HT requested
+  if (rate === 0) return amount; // already HT
+  return amount / (1 + rate);
+}
+
+function variantKey(row) {
+  const p = (row['Product name'] || '').trim();
+  const s = (row['SKU name'] || '').trim();
+  if (!p || p === '/') return null;
+  return `${p}|${s}`;
+}
+
+// Get HT cost for a row: variant override → product default → 0.
+// Returns { cost, source } where source is 'variant' | 'product' | null.
+function getCost(row) {
+  const p = (row['Product name'] || '').trim();
+  if (!p || p === '/') return { cost: 0, source: null };
+  const vk = variantKey(row);
+  if (vk && state.catalogue.byVariant[vk] > 0) {
+    return { cost: state.catalogue.byVariant[vk], source: 'variant' };
+  }
+  if (state.catalogue.byProduct[p] > 0) {
+    return { cost: state.catalogue.byProduct[p], source: 'product' };
+  }
+  return { cost: 0, source: null };
+}
+
+// A row is considered refunded if Net sales = 0 while Subtotal > 0
+// (TikTok writes the refund into Net sales but keeps Subtotal positive)
+function isRefunded(row) {
+  if (row['Type'] !== 'Order') return false;
+  const subtotal = parseFloat(row['Subtotal before discounts']) || 0;
+  const netSales = parseFloat(row['Net sales']) || 0;
+  return subtotal > 0 && netSales === 0;
+}
+
+/**
+ * Compute all KPIs according to v1.1 accounting methodology:
+ *  - CA TTC = Net sales + Shipping + Adjustments (reimbursements)
+ *  - CA HT  = CA TTC ÷ 1.20
+ *  - Fees   = sum of TikTok fee columns (NO VAT — kept as-is)
+ *  - Settlement coherence check: CA TTC + Fees = Total settlement amount
+ */
+function computeKPIs(year = state.ui.yearFilter) {
+  const allRows = filteredOrders(year);
+  const orders = allRows.filter(o => o['Type'] === 'Order');
+
+  // === CA components (raw TTC) ===
+  let subtotalBeforeDiscounts = 0; // CA Brut TTC (avant remises)
+  let sellerDiscounts = 0;
+  let refundsBefore = 0;
+  let refundsDiscounts = 0;
+  let netSales = 0;                // Net sales (post-remises + remboursements clients)
+  let shipping = 0;                // Net shipping (peut être négatif)
+  let adjustments = 0;             // Tous les Adjustment amount (reimbursements + bill payments)
+  let totalSettlement = 0;
+  let qtySold = 0;
+  let qtyRefunded = 0;
+  let cogs = 0, missingCost = 0;
+
+  // === Fees (no VAT) ===
+  let commission = 0, affiliate = 0, affiliatePartner = 0, affiliateShopAds = 0;
+  let epr = 0, coFunded = 0, smartPromo = 0;
+  let campaignFee = 0, campaignSvc = 0, gmvMax = 0;
+
+  // Pass over ALL rows (Orders + Reimbursements + Bill payments)
+  allRows.forEach(o => {
+    const isOrder = o['Type'] === 'Order';
+
+    // CA components — Net sales / Shipping / Adjustments come from ALL row types
+    // (a reimbursement row has no Net sales but has an Adjustment amount)
+    netSales += parseFloat(o['Net sales']) || 0;
+    shipping += parseFloat(o['Shipping']) || 0;
+    adjustments += parseFloat(o['Adjustment amount']) || 0;
+    totalSettlement += parseFloat(o['Total settlement amount']) || 0;
+
+    if (isOrder) {
+      subtotalBeforeDiscounts += parseFloat(o['Subtotal before discounts']) || 0;
+      sellerDiscounts += parseFloat(o['Seller discounts']) || 0;
+      refundsBefore += parseFloat(o['Refund subtotal before seller discounts']) || 0;
+      refundsDiscounts += parseFloat(o['Refund of seller discounts']) || 0;
+      qtySold += parseInt(o['Quantity']) || 0;
+
+      // COGS lookup (variant → product fallback)
+      // Refunded orders (Net sales = 0) are EXCLUDED: the merchandise is returned,
+      // so the cost is not borne. Toggleable via settings.excludeRefundedFromCogs.
+      const q = parseInt(o['Quantity']) || 0;
+      const refunded = isRefunded(o);
+      if (refunded) {
+        qtyRefunded += q;
+      }
+      const excludeRefunded = state.settings.excludeRefundedFromCogs !== false; // default ON
+      if (excludeRefunded && refunded) {
+        // Skip COGS for this refunded order
+      } else {
+        const { cost } = getCost(o);
+        if (cost > 0) {
+          cogs += cost * q;
+        } else if (q > 0) {
+          missingCost += q;
+        }
+      }
+    }
+
+    // Fees (no VAT) — from all rows in case TikTok charges fees on reimbursements too
+    commission += parseFloat(o['TikTok Shop commission fee']) || 0;
+    affiliate += parseFloat(o['Affiliate Commission']) || 0;
+    affiliatePartner += parseFloat(o['Affiliate partner commission']) || 0;
+    affiliateShopAds += parseFloat(o['Affiliate Shop Ads commission']) || 0;
+    epr += parseFloat(o['EPR Pay on Behalf service fee']) || 0;
+    coFunded += parseFloat(o['Co-funded promotion (seller-funded)']) || 0;
+    smartPromo += parseFloat(o['Smart Promotion fee']) || 0;
+    campaignFee += parseFloat(o['Campaign resource fee']) || 0;
+    campaignSvc += parseFloat(o['Campaign service fee']) || 0;
+    gmvMax += parseFloat(o['GMV Max ad fee']) || 0;
+  });
+
+  const totalFees = commission + affiliate + affiliatePartner + affiliateShopAds
+                  + epr + coFunded + smartPromo + campaignFee + campaignSvc + gmvMax;
+
+  // === CA computations per accountant ===
+  // CA Brut TTC = Subtotal (avant remises) + Shipping + Adjustments
+  const caBrutTTC_raw = subtotalBeforeDiscounts + shipping + adjustments;
+  // CA Net TTC = Net sales + Shipping + Adjustments  (la vraie ligne comptable)
+  const caNetTTC_raw = netSales + shipping + adjustments;
+
+  // Apply VAT display toggle (only on CA, never on Fees)
+  const caBrut = adjustCA(caBrutTTC_raw);
+  const caNet = adjustCA(caNetTTC_raw);
+  const caHT = caNetTTC_raw / 1.20;     // always HT for reference
+  const caTTC = caNetTTC_raw;            // always TTC for reference
+
+  // COGS is HT (user enters HT cost), already correct
+  const margeBrute = caHT - cogs;
+  const margeNette = caHT - cogs + totalFees; // fees are negative
+
+  // Settlement coherence (TikTok): CA Net TTC + Fees should = Total settlement
+  const settlementExpected = caNetTTC_raw + totalFees;
+  const settlementDelta = totalSettlement - settlementExpected;
+
+  return {
+    // CA family
+    caBrut, caBrutRaw: caBrutTTC_raw,
+    caNet, caNetRaw: caNetTTC_raw,
+    caHT, caTTC,
+    netSales, shipping, adjustments,
+    subtotalBeforeDiscounts, sellerDiscounts, refundsBefore, refundsDiscounts,
+
+    // Volumes
+    qtySold,
+    qtyRefunded,
+    orderCount: orders.length,
+    rowCount: allRows.length,
+
+    // Costs & margins (always HT)
+    cogs, missingCost,
+    margeBrute,
+    margeBrutePct: caHT > 0 ? (margeBrute / caHT) * 100 : null,
+    margeNette,
+    margeNettePct: caHT > 0 ? (margeNette / caHT) * 100 : null,
+
+    // Fees (no VAT)
+    commission, epr,
+    affiliate: affiliate + affiliatePartner + affiliateShopAds,
+    coFunded, smartPromo,
+    campaign: campaignFee + campaignSvc,
+    gmvMax,
+    totalFees,
+    feesPct: caHT > 0 ? (Math.abs(totalFees) / caHT) * 100 : null,
+
+    // Settlement check
+    settlement: totalSettlement,
+    settlementExpected,
+    settlementDelta
+  };
+}
+
+/* ============ RENDER: YEAR FILTERS ============ */
+function renderYearFilters() {
+  const years = getYears();
+  const html = `
+    <button class="filter-btn ${state.ui.yearFilter === 'all' ? 'active' : ''}" data-year="all">Tout</button>
+    ${years.map(y => `<button class="filter-btn ${state.ui.yearFilter === y ? 'active' : ''}" data-year="${y}">${y}</button>`).join('')}
+  `;
+  ['yearFilterDash', 'yearFilterCharges', 'yearFilterProd', 'yearFilterCmd'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  });
+}
+
+/* ============ RENDER: DASHBOARD ============ */
+function renderDashboard() {
+  renderYearFilters();
+  const isEmpty = state.orders.length === 0;
+  document.getElementById('dashEmpty').style.display = isEmpty ? '' : 'none';
+  document.getElementById('dashContent').style.display = isEmpty ? 'none' : '';
+  if (isEmpty) return;
+
+  const k = computeKPIs();
+  const sub = document.getElementById('dashSub');
+  sub.textContent = `${k.orderCount} commande(s) · ${k.qtySold} article(s) vendu(s) · affichage CA en ${state.ui.vatDisplay.toUpperCase()}`;
+
+  // Cohérence settlement
+  const deltaOK = Math.abs(k.settlementDelta) < 1; // tolérance 1€
+  const deltaBadge = deltaOK
+    ? `<span class="badge badge-ok">✓ Settlement cohérent</span>`
+    : `<span class="badge badge-warn">⚠ Δ ${money(k.settlementDelta)}</span>`;
+
+  const kpiHtml = `
+    <div class="kpi accent">
+      <div class="kpi-label">CA Brut ${state.ui.vatDisplay.toUpperCase()}</div>
+      <div class="kpi-value">${money(k.caBrut, {symbol: false})}<span class="currency">€</span></div>
+      <div class="kpi-sub">subtotal + shipping + reimb.</div>
+    </div>
+    <div class="kpi accent">
+      <div class="kpi-label">CA Net ${state.ui.vatDisplay.toUpperCase()}</div>
+      <div class="kpi-value">${money(k.caNet, {symbol: false})}<span class="currency">€</span></div>
+      <div class="kpi-sub">net sales + shipping + reimb.</div>
+    </div>
+    <div class="kpi accent">
+      <div class="kpi-label">CA TTC</div>
+      <div class="kpi-value">${money(k.caTTC, {symbol: false})}<span class="currency">€</span></div>
+      <div class="kpi-sub">ligne comptable officielle</div>
+    </div>
+    <div class="kpi accent">
+      <div class="kpi-label">CA HT</div>
+      <div class="kpi-value">${money(k.caHT, {symbol: false})}<span class="currency">€</span></div>
+      <div class="kpi-sub">CA TTC ÷ 1,20</div>
+    </div>
+    <div class="kpi neutral">
+      <div class="kpi-label">Coût marchandises</div>
+      <div class="kpi-value">${money(k.cogs, {symbol: false})}<span class="currency">€</span></div>
+      <div class="kpi-sub">
+        ${k.missingCost > 0 ? `<span class="cell-bad">⚠ ${k.missingCost} qté sans coût</span>` : '✓ tous les coûts saisis'}
+        ${k.qtyRefunded > 0 ? `<br><span class="cell-muted" style="font-size:11px;">${k.qtySold - k.qtyRefunded} articles vendus nets · ${k.qtyRefunded} remboursés exclus</span>` : ''}
+      </div>
+    </div>
+    <div class="kpi ${k.margeBrute >= 0 ? 'positive' : 'negative'}">
+      <div class="kpi-label">Marge brute HT</div>
+      <div class="kpi-value ${k.margeBrute >= 0 ? 'good' : 'bad'}">${money(k.margeBrute, {symbol: false})}<span class="currency">€</span></div>
+      <div class="kpi-sub">${k.margeBrutePct !== null ? FMT.format(k.margeBrutePct) + ' %' : '—'} du CA HT</div>
+    </div>
+    <div class="kpi negative">
+      <div class="kpi-label">Fees TikTok (sans TVA)</div>
+      <div class="kpi-value bad">${money(k.totalFees, {symbol: false})}<span class="currency">€</span></div>
+      <div class="kpi-sub">${k.feesPct !== null ? FMT.format(k.feesPct) + ' %' : '—'} du CA HT</div>
+    </div>
+    <div class="kpi ${k.margeNette >= 0 ? 'positive' : 'negative'}">
+      <div class="kpi-label">Marge nette HT</div>
+      <div class="kpi-value ${k.margeNette >= 0 ? 'good' : 'bad'}">${money(k.margeNette, {symbol: false})}<span class="currency">€</span></div>
+      <div class="kpi-sub">${k.margeNettePct !== null ? FMT.format(k.margeNettePct) + ' %' : '—'} du CA HT · ${deltaBadge}</div>
+    </div>
+  `;
+  document.getElementById('kpiGrid').innerHTML = kpiHtml;
+
+  renderChartCA();
+  renderChartChargesPie(k);
+  renderTopProducts();
+  renderCABreakdown(k);
+  renderReconciliation(k);
+}
+
+function renderCABreakdown(k) {
+  const rate = vatRate();
+  const ttcLabel = state.ui.vatDisplay === 'ttc' ? 'TTC' : 'TTC';
+  const htRate = rate > 0 ? `÷ ${(1 + rate).toFixed(2)}` : '';
+  const lines = [
+    ['Subtotal before discounts', k.subtotalBeforeDiscounts, 'CA brut avant remises (TTC source)'],
+    ['Seller discounts', k.sellerDiscounts, 'remises vendeur'],
+    ['Refunds', k.refundsBefore + k.refundsDiscounts, 'remboursements clients'],
+    ['= Net sales', k.netSales, 'ventes nettes (TTC)', true],
+    ['+ Shipping (net)', k.shipping, 'frais de port nets ajoutés au CA'],
+    ['+ Adjustments', k.adjustments, 'TikTok reimb + Logistics reimb + Bill payment'],
+    ['= CA Net TTC', k.caNetRaw, 'ligne comptable', true],
+    [`= CA HT (${htRate})`, k.caHT, 'pour calcul de marge', true]
+  ];
+  const tbody = document.querySelector('#caBreakdownTable tbody');
+  tbody.innerHTML = lines.map(([label, value, sub, bold]) => `
+    <tr ${bold ? 'class="total"' : ''}>
+      <td>${bold ? `<strong>${escapeHtml(label)}</strong>` : escapeHtml(label)}<br><span class="cell-muted" style="font-size:11px;">${escapeHtml(sub)}</span></td>
+      <td class="num ${bold ? 'cell-strong' : ''}">${money(value)}</td>
+    </tr>
+  `).join('');
+}
+
+function renderReconciliation(k) {
+  const deltaOK = Math.abs(k.settlementDelta) < 1;
+  const lines = [
+    ['CA Net TTC', k.caNetRaw, 'Net sales + Shipping + Adjustments'],
+    ['+ Fees TikTok (sans TVA)', k.totalFees, 'commission + EPR + affiliation + …'],
+    ['= Settlement attendu', k.settlementExpected, 'théorique', true],
+    ['Settlement réel TikTok', k.settlement, 'Total settlement amount du fichier', true],
+    [deltaOK ? '✓ Écart' : '⚠ Écart', k.settlementDelta, deltaOK ? 'cohérent (< 1 €)' : 'à investiguer', true]
+  ];
+  const tbody = document.querySelector('#reconciliationTable tbody');
+  tbody.innerHTML = lines.map(([label, value, sub, bold]) => `
+    <tr ${bold ? 'class="total"' : ''}>
+      <td>${bold ? `<strong>${escapeHtml(label)}</strong>` : escapeHtml(label)}<br><span class="cell-muted" style="font-size:11px;">${escapeHtml(sub)}</span></td>
+      <td class="num ${bold ? 'cell-strong' : ''} ${value < 0 ? 'cell-bad' : ''}">${money(value)}</td>
+    </tr>
+  `).join('');
+}
+
+function renderChartCA() {
+  const rows = filteredOrders();
+  const byMonth = {};
+  rows.forEach(o => {
+    const d = String(o['Statement date'] || '');
+    const ym = d.slice(0, 7);
+    if (!ym) return;
+    // CA Net TTC per month = Net sales + Shipping + Adjustments
+    const v = (parseFloat(o['Net sales']) || 0)
+            + (parseFloat(o['Shipping']) || 0)
+            + (parseFloat(o['Adjustment amount']) || 0);
+    byMonth[ym] = (byMonth[ym] || 0) + adjustCA(v);
+  });
+  const labels = Object.keys(byMonth).sort();
+  const data = labels.map(l => byMonth[l]);
+
+  const ctx = document.getElementById('chartCA');
+  if (charts.chartCA) charts.chartCA.destroy();
+  charts.chartCA = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'CA Net ' + state.ui.vatDisplay.toUpperCase(),
+        data,
+        borderColor: '#d97560',
+        backgroundColor: 'rgba(217, 117, 96, 0.10)',
+        fill: true,
+        tension: 0.35,
+        pointBackgroundColor: '#d97560',
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { ticks: { callback: v => FMT0.format(v) + ' €' }, grid: { color: '#ede4e0' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+function renderChartChargesPie(k) {
+  const items = [
+    ['Commission TikTok', Math.abs(k.commission)],
+    ['Affiliation', Math.abs(k.affiliate)],
+    ['EPR', Math.abs(k.epr)],
+    ['Promo co-financée', Math.abs(k.coFunded)],
+    ['Smart Promotion', Math.abs(k.smartPromo)],
+    ['Campagnes', Math.abs(k.campaign)],
+    ['GMV Max', Math.abs(k.gmvMax)]
+  ].filter(([, v]) => v > 0.01);
+
+  const ctx = document.getElementById('chartChargesPie');
+  if (charts.chartChargesPie) charts.chartChargesPie.destroy();
+  charts.chartChargesPie = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: items.map(i => i[0]),
+      datasets: [{
+        data: items.map(i => i[1]),
+        backgroundColor: ['#d97560', '#e89a87', '#f0bdaf', '#c89446', '#b85a47', '#8f4334', '#594843', '#8c7872']
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { font: { size: 11 }, boxWidth: 12, padding: 8 } },
+        tooltip: { callbacks: { label: (c) => `${c.label}: ${FMT.format(c.parsed)} €` } }
+      },
+      cutout: '60%'
+    }
+  });
+}
+
+function renderTopProducts() {
+  const orders = filteredOrders().filter(o => o['Type'] === 'Order');
+  const byProduct = {};
+  orders.forEach(o => {
+    const p = (o['Product name'] || '').trim();
+    if (!p || p === '/') return;
+    if (!byProduct[p]) byProduct[p] = { name: p, qty: 0, ca: 0, net: 0, cogs: 0, missing: 0 };
+    const row = byProduct[p];
+    const q = parseInt(o['Quantity']) || 0;
+    const sub = parseFloat(o['Subtotal before discounts']) || 0;
+    const ns = parseFloat(o['Net sales']) || 0;
+    row.qty += q;
+    row.ca += adjustCA(sub);
+    row.net += adjustCA(ns);
+    const excludeRefunded = state.settings.excludeRefundedFromCogs !== false;
+    if (excludeRefunded && isRefunded(o)) {
+      // skip cost for refunded
+    } else {
+      const { cost } = getCost(o);
+      if (cost > 0) {
+        row.cogs += cost * q;
+      } else {
+        row.missing += q;
+      }
+    }
+  });
+  const arr = Object.values(byProduct).sort((a, b) => b.ca - a.ca);
+  const tbody = document.querySelector('#topProductsTable tbody');
+  tbody.innerHTML = arr.map(r => {
+    const marge = r.net - r.cogs;
+    const pct = r.net > 0 ? (marge / r.net) * 100 : null;
+    return `<tr>
+      <td><strong>${escapeHtml(r.name)}</strong></td>
+      <td class="num">${r.qty}</td>
+      <td class="num">${money(r.ca)}</td>
+      <td class="num">${money(r.net)}</td>
+      <td class="num">${r.missing > 0 ? `<span class="cell-muted">${money(r.cogs)} (${r.missing} ⚠)</span>` : money(r.cogs)}</td>
+      <td class="num ${marge >= 0 ? 'cell-good' : 'cell-bad'}">${money(marge)}</td>
+      <td class="num ${marge >= 0 ? 'cell-good' : 'cell-bad'}">${pct !== null ? FMT.format(pct) + ' %' : '—'}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" class="empty-state">Aucun produit</td></tr>';
+}
+
+function escapeHtml(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ============ RENDER: IMPORTS ============ */
+function renderImports() {
+  const tbody = document.querySelector('#importsTable tbody');
+  const empty = document.getElementById('importsEmpty');
+  if (state.imports.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = '';
+    return;
+  }
+  empty.style.display = 'none';
+  tbody.innerHTML = state.imports.slice().reverse().map((imp, idx) => {
+    const realIdx = state.imports.length - 1 - idx;
+    return `<tr>
+      <td><strong>${escapeHtml(imp.filename)}</strong></td>
+      <td>${new Date(imp.importedAt).toLocaleString('fr-FR')}</td>
+      <td class="num">${imp.rowCount} <span class="cell-muted">(${imp.added} ajoutées)</span></td>
+      <td class="num cell-mono" style="font-size:11px;">${escapeHtml(imp.period)}</td>
+      <td class="num">${money(imp.ca)}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteImport(${realIdx})">Supprimer</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function deleteImport(idx) {
+  if (!confirm('Supprimer cet import et toutes ses lignes ?')) return;
+  const imp = state.imports[idx];
+  const stIds = new Set(imp.statementIds.map(String));
+  state.orders = state.orders.filter(o => !stIds.has(String(o['Statement ID'])));
+  state.imports.splice(idx, 1);
+  saveState();
+  renderCurrentPage();
+  toast('Import supprimé', 'success');
+}
+
+/* ============ RENDER: CATALOGUE ============ */
+function renderCatalogue() {
+  const orders = state.orders.filter(o => o['Type'] === 'Order');
+
+  // Aggregate by product (for the main table)
+  const products = {};
+  // Aggregate by variant (for the override table)
+  const variants = {};
+
+  orders.forEach(o => {
+    const p = (o['Product name'] || '').trim();
+    if (!p || p === '/') return;
+    const v = (o['SKU name'] || '').trim();
+    const q = parseInt(o['Quantity']) || 0;
+    const rev = parseFloat(o['Subtotal before discounts']) || 0;
+
+    if (!products[p]) products[p] = { product: p, qty: 0, revenue: 0, variantsCount: new Set() };
+    products[p].qty += q;
+    products[p].revenue += rev;
+    products[p].variantsCount.add(v);
+
+    const vKey = `${p}|${v}`;
+    if (!variants[vKey]) variants[vKey] = { key: vKey, product: p, variant: v, qty: 0, revenue: 0 };
+    variants[vKey].qty += q;
+    variants[vKey].revenue += rev;
+  });
+
+  const productArr = Object.values(products).sort((a, b) => b.qty - a.qty);
+  const variantArr = Object.values(variants).sort((a, b) => b.qty - a.qty);
+
+  // Stats
+  const totalVariants = variantArr.length;
+  const totalProducts = productArr.length;
+  let coveredQty = 0, missingQty = 0, totalQty = 0;
+  let qtyByProduct = 0, qtyByVariant = 0;
+  orders.forEach(o => {
+    const q = parseInt(o['Quantity']) || 0;
+    totalQty += q;
+    const { cost, source } = getCost(o);
+    if (cost > 0) {
+      coveredQty += q;
+      if (source === 'variant') qtyByVariant += q;
+      else qtyByProduct += q;
+    } else {
+      missingQty += q;
+    }
+  });
+
+  // Update stats bar
+  document.getElementById('catCount').textContent = `${totalProducts} produits / ${totalVariants} variantes`;
+  document.getElementById('catFilled').textContent = `${coveredQty} / ${totalQty} qté`;
+  document.getElementById('catEmpty').textContent = missingQty;
+
+  if (totalProducts === 0) {
+    document.querySelector('#catProductTable tbody').innerHTML = '';
+    document.querySelector('#catVariantTable tbody').innerHTML = '';
+    document.getElementById('catEmptyState').style.display = '';
+    return;
+  }
+  document.getElementById('catEmptyState').style.display = 'none';
+
+  // === Product-level table (main) ===
+  const search = state.ui.catSearch.toLowerCase();
+  const productRows = productArr.filter(p => !search || p.product.toLowerCase().includes(search));
+  document.querySelector('#catProductTable tbody').innerHTML = productRows.map(p => {
+    const cost = state.catalogue.byProduct[p.product] || '';
+    const avgPriceHT = p.qty > 0 ? (p.revenue / 1.20) / p.qty : 0;
+    const margin = cost ? avgPriceHT - cost : null;
+    const marginPct = (cost && avgPriceHT > 0) ? (margin / avgPriceHT * 100) : null;
+    const cogsTotal = cost ? cost * p.qty : 0;
+    return `<tr>
+      <td><strong>${escapeHtml(p.product)}</strong></td>
+      <td class="num cell-muted">${p.variantsCount.size}</td>
+      <td class="num">${p.qty}</td>
+      <td class="num cell-muted">${money(avgPriceHT)}</td>
+      <td class="num"><input type="number" class="input input-money" step="0.01" min="0" placeholder="0.00" value="${cost}" data-product="${escapeHtml(p.product)}" onchange="updateProductCost(this)"></td>
+      <td class="num ${margin === null ? '' : (margin >= 0 ? 'cell-good' : 'cell-bad')}">${margin === null ? '—' : money(margin)}</td>
+      <td class="num ${marginPct === null ? '' : (marginPct >= 0 ? 'cell-good' : 'cell-bad')}">${marginPct !== null ? FMT.format(marginPct) + ' %' : '—'}</td>
+      <td class="num">${cost ? money(cogsTotal) : '—'}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="8" class="empty-state">Aucun résultat</td></tr>';
+
+  // === Variant-level table (overrides only) ===
+  // Show only variants that have an override OR are missing AND no product cost is set
+  const filter = state.ui.catFilter;
+  let variantRows = variantArr.filter(v => {
+    if (search && !(v.product + ' ' + v.variant).toLowerCase().includes(search)) return false;
+    const hasOverride = state.catalogue.byVariant[v.key] > 0;
+    const hasProductCost = state.catalogue.byProduct[v.product] > 0;
+    if (filter === 'overrides') return hasOverride;
+    if (filter === 'missing') return !hasOverride && !hasProductCost;
+    return hasOverride; // default: only show overrides
+  });
+
+  document.querySelector('#catVariantTable tbody').innerHTML = variantRows.map(v => {
+    const override = state.catalogue.byVariant[v.key] || '';
+    const defaultCost = state.catalogue.byProduct[v.product] || 0;
+    const effective = override || defaultCost;
+    const avgPriceHT = v.qty > 0 ? (v.revenue / 1.20) / v.qty : 0;
+    const margin = effective ? avgPriceHT - effective : null;
+    return `<tr>
+      <td>${escapeHtml(v.product)}</td>
+      <td class="cell-muted">${escapeHtml(v.variant) || '<em>—</em>'}</td>
+      <td class="num">${v.qty}</td>
+      <td class="num cell-muted">${money(avgPriceHT)}</td>
+      <td class="num cell-muted">${defaultCost ? money(defaultCost) : '—'}</td>
+      <td class="num"><input type="number" class="input input-money" step="0.01" min="0" placeholder="(par défaut)" value="${override}" data-key="${escapeHtml(v.key)}" onchange="updateVariantCost(this)"></td>
+      <td class="num ${margin === null ? '' : (margin >= 0 ? 'cell-good' : 'cell-bad')}">${margin === null ? '—' : money(margin)}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" class="cell-muted" style="text-align:center;padding:24px;">Aucun override ' + (filter === 'missing' ? 'manquant' : '') + ' — clique sur "Toutes les variantes manquantes" pour en ajouter</td></tr>';
+}
+
+function updateProductCost(input) {
+  const product = input.dataset.product;
+  const val = parseFloat(input.value);
+  if (!product) return;
+  if (isNaN(val) || val <= 0) {
+    delete state.catalogue.byProduct[product];
+  } else {
+    state.catalogue.byProduct[product] = val;
+  }
+  saveState();
+  renderCatalogue();
+}
+
+function updateVariantCost(input) {
+  const key = input.dataset.key;
+  const val = parseFloat(input.value);
+  if (!key) return;
+  if (isNaN(val) || val <= 0) {
+    delete state.catalogue.byVariant[key];
+  } else {
+    state.catalogue.byVariant[key] = val;
+  }
+  saveState();
+  renderCatalogue();
+}
+
+function exportCatalogue() {
+  const orders = state.orders.filter(o => o['Type'] === 'Order');
+  const products = {};
+  orders.forEach(o => {
+    const p = (o['Product name'] || '').trim();
+    if (!p || p === '/') return;
+    if (!products[p]) products[p] = { product: p, qty: 0 };
+    products[p].qty += parseInt(o['Quantity']) || 0;
+  });
+  const data = Object.values(products).map(p => ({
+    'Product name': p.product,
+    'Qté vendue': p.qty,
+    'Prix HT': state.catalogue.byProduct[p.product] || ''
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  ws['!cols'] = [{wch:28},{wch:12},{wch:12}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Prix d'achat");
+  XLSX.writeFile(wb, `bylou_prix_achat_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('Catalogue exporté', 'success');
+}
+
+function importCatalogue(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
+      let updatedProducts = 0, updatedVariants = 0, skipped = 0;
+
+      // Detect format flexibly. Accept: Product name | Produit | Product
+      // Optional variant: SKU name | Variante | Variant
+      // Cost column: Prix HT, Prix HT (€), Coût d'achat HT (€), Cost
+      rows.forEach(r => {
+        const p = String(r['Product name'] || r['Produit'] || r['Product'] || '').trim();
+        const v = String(r['SKU name'] || r['Variante'] || r['Variant'] || '').trim();
+        // Find cost in any matching column (handles 'Prix HT' with trailing space)
+        let c = 0;
+        for (const key of Object.keys(r)) {
+          if (/prix\s*ht|cost|co[uû]t/i.test(key)) {
+            const parsed = parseFloat(String(r[key]).replace(',', '.'));
+            if (!isNaN(parsed) && parsed > 0) { c = parsed; break; }
+          }
+        }
+        if (!p || p === '/' || c <= 0) { skipped++; return; }
+
+        if (v) {
+          state.catalogue.byVariant[`${p}|${v}`] = c;
+          updatedVariants++;
+        } else {
+          state.catalogue.byProduct[p] = c;
+          updatedProducts++;
+        }
+      });
+      saveState();
+      renderCatalogue();
+      const msg = updatedProducts > 0 && updatedVariants > 0
+        ? `✓ ${updatedProducts} produit(s) + ${updatedVariants} variante(s) importé(s)`
+        : updatedProducts > 0
+        ? `✓ ${updatedProducts} produit(s) importé(s)`
+        : `✓ ${updatedVariants} variante(s) importée(s)`;
+      toast(msg + (skipped > 0 ? ` (${skipped} ligne(s) ignorée(s))` : ''), 'success');
+    } catch (err) {
+      toast('Erreur import : ' + err.message, 'error');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+/* ============ RENDER: CHARGES ============ */
+function renderCharges() {
+  renderYearFilters();
+  const k = computeKPIs();
+  const items = [
+    { label: 'Commission TikTok Shop', value: k.commission, sub: '% sur ventes (sans TVA)' },
+    { label: 'Affiliation', value: k.affiliate, sub: 'creators + partners + shop ads' },
+    { label: 'EPR (Pay on Behalf)', value: k.epr, sub: 'écoresponsabilité' },
+    { label: 'Promo co-financée', value: k.coFunded, sub: 'seller-funded promotions' },
+    { label: 'Smart Promotion', value: k.smartPromo, sub: 'frais de promo automatisée' },
+    { label: 'Campagnes', value: k.campaign, sub: 'resource + service' },
+    { label: 'GMV Max Ads', value: k.gmvMax, sub: 'budget pub automatique' }
+  ];
+
+  const html = items.map(it => {
+    const abs = Math.abs(it.value);
+    const pct = k.caHT > 0 ? (abs / k.caHT * 100) : 0;
+    return `<div class="charge-card">
+      <h4>${it.label}</h4>
+      <div class="charge-row"><span class="label">Montant (sans TVA)</span><span class="value ${it.value < 0 ? 'cell-bad' : it.value > 0 ? 'cell-good' : ''}">${money(it.value)}</span></div>
+      <div class="charge-row"><span class="label">% du CA HT</span><span class="value">${FMT.format(pct)} %</span></div>
+      <div class="charge-row"><span class="label cell-muted">${it.sub}</span></div>
+    </div>`;
+  }).join('');
+
+  const htmlTotal = `<div class="charge-card" style="border-top:3px solid var(--bad);">
+    <h4>Total Fees</h4>
+    <div class="charge-row total"><span class="label">Net (sans TVA)</span><span class="value">${money(k.totalFees)}</span></div>
+    <div class="charge-row"><span class="label">% du CA HT</span><span class="value">${k.feesPct !== null ? FMT.format(k.feesPct) + ' %' : '—'}</span></div>
+    <div class="charge-row"><span class="label cell-muted">sur ${k.orderCount} commandes</span></div>
+  </div>`;
+  document.getElementById('chargesGrid').innerHTML = html + htmlTotal;
+
+  renderChargesEvolutionChart();
+}
+
+function renderChargesEvolutionChart() {
+  const rows = filteredOrders();
+  const byMonth = {};
+  rows.forEach(o => {
+    const ym = String(o['Statement date'] || '').slice(0, 7);
+    if (!ym) return;
+    if (!byMonth[ym]) byMonth[ym] = { commission: 0, epr: 0, affiliate: 0, smartPromo: 0, gmv: 0, campaign: 0 };
+    // Fees have NO VAT — kept as-is (absolute value for display)
+    byMonth[ym].commission += Math.abs(parseFloat(o['TikTok Shop commission fee']) || 0);
+    byMonth[ym].epr += Math.abs(parseFloat(o['EPR Pay on Behalf service fee']) || 0);
+    byMonth[ym].affiliate += Math.abs((parseFloat(o['Affiliate Commission']) || 0)
+                                    + (parseFloat(o['Affiliate partner commission']) || 0)
+                                    + (parseFloat(o['Affiliate Shop Ads commission']) || 0));
+    byMonth[ym].smartPromo += Math.abs(parseFloat(o['Smart Promotion fee']) || 0);
+    byMonth[ym].gmv += Math.abs(parseFloat(o['GMV Max ad fee']) || 0);
+    byMonth[ym].campaign += Math.abs((parseFloat(o['Campaign resource fee']) || 0) + (parseFloat(o['Campaign service fee']) || 0));
+  });
+  const labels = Object.keys(byMonth).sort();
+  const palette = ['#d97560', '#e89a87', '#f0bdaf', '#c89446', '#8f4334', '#594843'];
+  const categories = ['commission', 'affiliate', 'epr', 'smartPromo', 'gmv', 'campaign'];
+  const catLabels = { commission: 'Commission', affiliate: 'Affiliation', epr: 'EPR', smartPromo: 'Smart Promo', gmv: 'GMV Max', campaign: 'Campagnes' };
+  const datasets = categories.map((c, i) => ({
+    label: catLabels[c],
+    data: labels.map(l => byMonth[l][c]),
+    backgroundColor: palette[i],
+    stack: 'charges'
+  }));
+  const ctx = document.getElementById('chartChargesEvolution');
+  if (charts.chartChargesEvolution) charts.chartChargesEvolution.destroy();
+  charts.chartChargesEvolution = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } },
+      scales: {
+        x: { stacked: true, grid: { display: false } },
+        y: { stacked: true, ticks: { callback: v => FMT0.format(v) + ' €' }, grid: { color: '#ede4e0' } }
+      }
+    }
+  });
+}
+
+/* ============ RENDER: PRODUITS ============ */
+function renderProduits() {
+  renderYearFilters();
+  const orders = filteredOrders().filter(o => o['Type'] === 'Order');
+  const byProduct = {};
+  orders.forEach(o => {
+    const p = (o['Product name'] || '').trim();
+    if (!p || p === '/') return;
+    if (!byProduct[p]) byProduct[p] = { name: p, qty: 0, ca: 0, net: 0, cogs: 0, missing: 0, variants: new Set() };
+    const row = byProduct[p];
+    row.variants.add((o['SKU name'] || '').trim());
+    const q = parseInt(o['Quantity']) || 0;
+    row.qty += q;
+    row.ca += adjustCA(parseFloat(o['Subtotal before discounts']) || 0);
+    row.net += adjustCA(parseFloat(o['Net sales']) || 0);
+    const excludeRefunded = state.settings.excludeRefundedFromCogs !== false;
+    if (excludeRefunded && isRefunded(o)) {
+      // skip cost
+    } else {
+      const { cost } = getCost(o);
+      if (cost > 0) row.cogs += cost * q;
+      else row.missing += q;
+    }
+  });
+  const search = state.ui.prodSearch.toLowerCase();
+  let arr = Object.values(byProduct);
+  if (search) arr = arr.filter(r => r.name.toLowerCase().includes(search));
+  arr.sort((a, b) => b.ca - a.ca);
+
+  const tbody = document.querySelector('#produitsTable tbody');
+  tbody.innerHTML = arr.map(r => {
+    const marge = r.net - r.cogs;
+    const pct = r.net > 0 ? (marge / r.net * 100) : null;
+    return `<tr>
+      <td><strong>${escapeHtml(r.name)}</strong></td>
+      <td class="num cell-muted">${r.variants.size}</td>
+      <td class="num">${r.qty}</td>
+      <td class="num">${money(r.ca)}</td>
+      <td class="num">${money(r.net)}</td>
+      <td class="num">${r.missing > 0 ? `<span class="cell-muted">${money(r.cogs)} <small>(${r.missing} ⚠)</small></span>` : money(r.cogs)}</td>
+      <td class="num ${marge >= 0 ? 'cell-good' : 'cell-bad'}">${money(marge)}</td>
+      <td class="num ${marge >= 0 ? 'cell-good' : 'cell-bad'}">${pct !== null ? FMT.format(pct) + ' %' : '—'}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="8" class="empty-state">Aucun produit</td></tr>';
+}
+
+/* ============ RENDER: COMMANDES ============ */
+function renderCommandes() {
+  renderYearFilters();
+  const search = state.ui.cmdSearch.toLowerCase();
+  let rows = filteredOrders();
+  if (search) {
+    rows = rows.filter(o => {
+      const blob = `${o['Product name']} ${o['SKU name']} ${o['Order/adjustment ID']} ${o['SKU ID']}`.toLowerCase();
+      return blob.includes(search);
+    });
+  }
+  const total = rows.length;
+  const start = state.ui.cmdPage * PAGE_SIZE;
+  const end = Math.min(start + PAGE_SIZE, total);
+  const page = rows.slice(start, end);
+
+  document.getElementById('cmdInfo').textContent = total === 0 ? 'Aucune commande' : `${start + 1}-${end} sur ${total}`;
+  document.getElementById('cmdPrev').disabled = start === 0;
+  document.getElementById('cmdNext').disabled = end >= total;
+
+  const tbody = document.querySelector('#commandesTable tbody');
+  tbody.innerHTML = page.map(o => {
+    const typeClass = o['Type'] === 'Order' ? 'badge-neutral' : o['Type']?.includes('reimbursement') ? 'badge-ok' : 'badge-warn';
+    return `<tr>
+      <td class="cell-mono" style="font-size:11px;">${escapeHtml(o['Statement date'])}</td>
+      <td><span class="badge ${typeClass}">${escapeHtml(o['Type'])}</span></td>
+      <td class="cell-mono" style="font-size:11px;">${escapeHtml(o['Order/adjustment ID'])}</td>
+      <td>${escapeHtml(o['Product name'])}</td>
+      <td class="cell-muted">${escapeHtml(o['SKU name'])}</td>
+      <td class="num">${o['Quantity'] || ''}</td>
+      <td class="num">${money(adjustCA(parseFloat(o['Subtotal before discounts']) || 0))}</td>
+      <td class="num">${money(adjustCA(parseFloat(o['Net sales']) || 0))}</td>
+      <td class="num ${parseFloat(o['Total settlement amount']) >= 0 ? '' : 'cell-bad'}">${money(adjustCA(parseFloat(o['Total settlement amount']) || 0))}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="9" class="empty-state">Aucune commande</td></tr>';
+}
+
+function exportCommandes() {
+  const data = filteredOrders().map(o => ({
+    'Date statement': o['Statement date'],
+    'Type': o['Type'],
+    'Order ID': o['Order/adjustment ID'],
+    'Produit': o['Product name'],
+    'Variante': o['SKU name'],
+    'Qté': o['Quantity'],
+    'CA brut': adjustCA(parseFloat(o['Subtotal before discounts']) || 0),
+    'Net sales': adjustCA(parseFloat(o['Net sales']) || 0),
+    'Settlement': adjustCA(parseFloat(o['Total settlement amount']) || 0)
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Commandes');
+  XLSX.writeFile(wb, `bylou_commandes_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('Commandes exportées', 'success');
+}
+
+/* ============ RENDER: SETTINGS ============ */
+function renderSettings() {
+  document.querySelectorAll('input[name=vatMode]').forEach(r => r.checked = r.value === state.settings.vatMode);
+  document.getElementById('vatCustomRate').value = state.settings.vatCustomRate;
+  const exRef = document.getElementById('excludeRefunded');
+  if (exRef) exRef.checked = state.settings.excludeRefundedFromCogs !== false;
+}
+
+function saveVatSettings() {
+  const mode = document.querySelector('input[name=vatMode]:checked')?.value || 'ttc_20';
+  const rate = parseFloat(document.getElementById('vatCustomRate').value) || 20;
+  state.settings.vatMode = mode;
+  state.settings.vatCustomRate = rate;
+  saveState();
+  toast('Paramètres TVA enregistrés', 'success');
+  renderCurrentPage();
+}
+
+function saveCogsSettings() {
+  state.settings.excludeRefundedFromCogs = document.getElementById('excludeRefunded').checked;
+  saveState();
+  toast('Paramètres COGS enregistrés', 'success');
+  renderCurrentPage();
+}
+
+/* ============ BACKUP / RESTORE / RESET ============ */
+function exportFullBackup() {
+  const data = JSON.stringify({
+    orders: state.orders,
+    imports: state.imports,
+    catalogue: state.catalogue,
+    settings: state.settings,
+    exportedAt: new Date().toISOString(),
+    version: 'tikperf-bylou-v1.3'
+  }, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `bylou_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Sauvegarde téléchargée', 'success');
+}
+
+function restoreBackup(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!confirm('Restaurer cette sauvegarde ? Les données actuelles seront remplacées.')) return;
+      state.orders = data.orders || [];
+      state.imports = data.imports || [];
+      // Handle both legacy and dual-level catalogue formats
+      if (data.catalogue && (data.catalogue.byProduct || data.catalogue.byVariant)) {
+        state.catalogue = {
+          byProduct: data.catalogue.byProduct || {},
+          byVariant: data.catalogue.byVariant || {}
+        };
+      } else if (data.catalogue) {
+        // Legacy: convert to byVariant
+        const byVariant = {};
+        Object.entries(data.catalogue).forEach(([k, v]) => {
+          if (v && v.cost > 0) byVariant[k] = v.cost;
+        });
+        state.catalogue = { byProduct: {}, byVariant };
+      } else {
+        state.catalogue = { byProduct: {}, byVariant: {} };
+      }
+      if (data.settings) state.settings = { ...state.settings, ...data.settings };
+      saveState();
+      renderCurrentPage();
+      toast('Sauvegarde restaurée', 'success');
+    } catch (err) {
+      toast('Erreur restauration : ' + err.message, 'error');
+    }
+  };
+  reader.readAsText(file);
+}
+
+async function resetAll() {
+  if (!confirm('⚠ Tout réinitialiser ? Toutes les données seront perdues (cloud + local).')) return;
+  if (!confirm('Vraiment ? Cette action est irréversible et synchronise la suppression sur tous tes appareils.')) return;
+  state.orders = [];
+  state.imports = [];
+  state.catalogue = { byProduct: {}, byVariant: {} };
+  state.settings = { vatMode: 'ttc_20', vatCustomRate: 20, excludeRefundedFromCogs: true };
+  localStorage.removeItem(LS_KEY);
+  state.ui.yearFilter = 'all';
+  state.ui.vatDisplay = 'ht';
+  if (state.cloud.enabled) {
+    await pushToCloud();
+  }
+  goPage('dashboard');
+  toast('Tout a été réinitialisé', 'success');
+}
+
+/* ============ EVENT BINDING ============ */
+function bindEvents() {
+  // Login form
+  const loginForm = document.getElementById('loginForm');
+  if (loginForm) loginForm.addEventListener('submit', attemptLogin);
+
+  // Hamburger drawer
+  const hb = document.getElementById('hamburgerBtn');
+  const ov = document.getElementById('drawerOverlay');
+  const sb = document.getElementById('sidebar');
+  const close = document.getElementById('sidebarClose');
+  function openDrawer() { sb.classList.add('open'); ov.classList.add('open'); state.ui.sidebarOpen = true; }
+  function closeDrawer() { sb.classList.remove('open'); ov.classList.remove('open'); state.ui.sidebarOpen = false; }
+  if (hb) hb.addEventListener('click', openDrawer);
+  if (close) close.addEventListener('click', closeDrawer);
+  if (ov) ov.addEventListener('click', closeDrawer);
+  // Close on Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && state.ui.sidebarOpen) closeDrawer();
+  });
+
+  // Nav (close drawer after click)
+  document.querySelectorAll('.nav-btn').forEach(b => b.addEventListener('click', () => {
+    goPage(b.dataset.page);
+    closeDrawer();
+  }));
+
+  // Year filters / VAT / cat-filter (delegation)
+  document.body.addEventListener('click', (e) => {
+    const yb = e.target.closest('[data-year]');
+    if (yb) {
+      state.ui.yearFilter = yb.dataset.year;
+      renderCurrentPage();
+      return;
+    }
+    const vb = e.target.closest('[data-vat]');
+    if (vb) {
+      state.ui.vatDisplay = vb.dataset.vat;
+      document.querySelectorAll('[data-vat]').forEach(b => b.classList.toggle('active', b.dataset.vat === vb.dataset.vat));
+      renderCurrentPage();
+      return;
+    }
+    const cf = e.target.closest('[data-cat-filter]');
+    if (cf) {
+      state.ui.catFilter = cf.dataset.catFilter;
+      document.querySelectorAll('[data-cat-filter]').forEach(b => b.classList.toggle('active', b.dataset.catFilter === cf.dataset.catFilter));
+      renderCatalogue();
+      return;
+    }
+  });
+
+  // File input (income import)
+  const fileInput = document.getElementById('fileInput');
+  if (fileInput) fileInput.addEventListener('change', (e) => {
+    if (e.target.files[0]) handleFile(e.target.files[0]);
+    e.target.value = '';
+  });
+
+  // Dropzone
+  const dz = document.getElementById('dropzoneIncome');
+  if (dz) {
+    dz.addEventListener('click', () => document.getElementById('fileInput').click());
+    ['dragenter', 'dragover'].forEach(ev => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.add('drag'); }));
+    ['dragleave', 'drop'].forEach(ev => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.remove('drag'); }));
+    dz.addEventListener('drop', (e) => {
+      if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+    });
+  }
+
+  // Catalogue search & import
+  const catSearch = document.getElementById('catSearch');
+  if (catSearch) catSearch.addEventListener('input', (e) => {
+    state.ui.catSearch = e.target.value;
+    renderCatalogue();
+  });
+  const catImport = document.getElementById('catImport');
+  if (catImport) catImport.addEventListener('change', (e) => {
+    if (e.target.files[0]) importCatalogue(e.target.files[0]);
+    e.target.value = '';
+  });
+
+  // Produits search
+  const prodSearch = document.getElementById('prodSearch');
+  if (prodSearch) prodSearch.addEventListener('input', (e) => {
+    state.ui.prodSearch = e.target.value;
+    renderProduits();
+  });
+
+  // Commandes search & pagination
+  const cmdSearch = document.getElementById('cmdSearch');
+  if (cmdSearch) cmdSearch.addEventListener('input', (e) => {
+    state.ui.cmdSearch = e.target.value;
+    state.ui.cmdPage = 0;
+    renderCommandes();
+  });
+  const cmdPrev = document.getElementById('cmdPrev');
+  if (cmdPrev) cmdPrev.addEventListener('click', () => {
+    if (state.ui.cmdPage > 0) { state.ui.cmdPage--; renderCommandes(); }
+  });
+  const cmdNext = document.getElementById('cmdNext');
+  if (cmdNext) cmdNext.addEventListener('click', () => {
+    state.ui.cmdPage++; renderCommandes();
+  });
+
+  // Restore from JSON
+  const restoreInput = document.getElementById('restoreInput');
+  if (restoreInput) restoreInput.addEventListener('change', (e) => {
+    if (e.target.files[0]) restoreBackup(e.target.files[0]);
+    e.target.value = '';
+  });
+
+  // Online/offline event handlers
+  window.addEventListener('online', () => {
+    if (state.cloud.enabled) setSyncStatus('synced');
+  });
+  window.addEventListener('offline', () => setSyncStatus('offline', 'Hors ligne'));
+}
+
+/* ============ SERVICE WORKER ============ */
+function registerServiceWorker() {
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    navigator.serviceWorker.register('sw.js')
+      .then((reg) => console.log('SW registered:', reg.scope))
+      .catch((err) => console.warn('SW registration failed:', err));
+  }
+}
+
+/* ============ INIT ============ */
+window.addEventListener('DOMContentLoaded', () => {
+  bindEvents();
+  renderYearFilters();
+  goPage('dashboard');
+  registerServiceWorker();
+
+  // If Firebase config is the placeholder, run in local-only mode immediately
+  if (FIREBASE_CONFIG.apiKey === 'REPLACE_ME') {
+    console.warn('Firebase config not set — running in local-only mode');
+    loadState();
+    showApp();
+    setSyncStatus('offline', 'Mode local');
+    document.getElementById('userChip').textContent = 'Local';
+    renderCurrentPage();
+    updateStorageInfo();
+    return;
+  }
+
+  // Otherwise wait for Firebase modules to load, then boot
+  let firebaseBooted = false;
+  const tryBoot = () => {
+    if (firebaseBooted) return;
+    if (window.firebaseModules) {
+      firebaseBooted = true;
+      bootFirebase();
+    }
+  };
+  tryBoot();
+  window.addEventListener('firebase-ready', tryBoot, { once: true });
+
+  // Fallback: if Firebase doesn't load in 5s (CDN blocked, offline at startup, etc),
+  // fall back to local-only mode so the app remains usable.
+  setTimeout(() => {
+    if (firebaseBooted || state.cloud.enabled) return;
+    console.warn('Firebase did not load in 5s — falling back to local-only mode');
+    loadState();
+    showApp();
+    setSyncStatus('offline', 'Hors ligne');
+    document.getElementById('userChip').textContent = 'Local';
+    renderCurrentPage();
+    updateStorageInfo();
+  }, 5000);
+});
+
+</script>
+</body>
+</html>
