@@ -6,7 +6,7 @@
  *   - Network-first for external CDNs (fallback to cache if offline)
  *   - Bump CACHE_VERSION on each release to force refresh
  */
-const CACHE_VERSION = 'tikperf-bylou-v1.7.30';
+const CACHE_VERSION = 'tikperf-bylou-v1.7.31';
 const APP_SHELL = [
   './',
   './index.html',
