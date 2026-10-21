@@ -1,26 +1,30 @@
 /* TikPerf By Lou - Service Worker
- * Strategy:
- *   - Cache-first for the app shell (index.html, icons, manifest)
- *   - Network-first for Firebase and external CDNs (CDN fallback to cache if offline)
+ * Strategy (v1.7.28):
+ *   - Network-first for the app's own files (index.html, icons, manifest):
+ *     every device always gets the latest version; the cache is only used offline
+ *   - Network-only for Firebase
+ *   - Network-first for external CDNs (fallback to cache if offline)
  *   - Bump CACHE_VERSION on each release to force refresh
  */
-const CACHE_VERSION = 'tikperf-bylou-v1.7.17';
+const CACHE_VERSION = 'tikperf-bylou-v1.7.28';
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.json',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
-  './icons/icon-maskable-192.png',
-  './icons/icon-maskable-512.png',
-  './icons/apple-touch-icon.png',
-  './icons/favicon-32.png',
-  './icons/favicon-16.png'
+  './icon-192.png',
+  './icon-512.png',
+  './icon-maskable-192.png',
+  './icon-maskable-512.png',
+  './apple-touch-icon.png',
+  './favicon-32.png',
+  './favicon-16.png'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_VERSION).then((cache) => cache.addAll(APP_SHELL))
+    // One missing file (e.g. an icon) must not block the install
+    caches.open(CACHE_VERSION)
+      .then((cache) => Promise.all(APP_SHELL.map((u) => cache.add(u).catch(() => null))))
       .then(() => self.skipWaiting())
   );
 });
@@ -47,14 +51,18 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Same-origin app shell: cache-first
+  // Same-origin app files: network-first (no HTTP cache for pages), cache only if offline
   if (url.origin === self.location.origin) {
+    const isPage = req.mode === 'navigate' || url.pathname.endsWith('/') || url.pathname.endsWith('.html');
+    const netFetch = isPage ? fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' }) : fetch(req);
     event.respondWith(
-      caches.match(req).then((cached) => cached || fetch(req).then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE_VERSION).then((cache) => cache.put(req, copy));
+      netFetch.then((res) => {
+        if (res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE_VERSION).then((cache) => cache.put(req, copy));
+        }
         return res;
-      }).catch(() => caches.match('./index.html')))
+      }).catch(() => caches.match(req).then((cached) => cached || caches.match('./index.html')))
     );
     return;
   }

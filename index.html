@@ -8,11 +8,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="TikPerf">
 <meta name="description" content="Analyse de performance TikTok Shop pour By Lou">
-<title>TikPerf By Lou · v1.7.27</title>
+<title>TikPerf By Lou · v1.7.28</title>
 <link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -22,8 +22,8 @@
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
   import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
-  import { getFirestore, doc, setDoc, getDoc, onSnapshot, serverTimestamp, enableIndexedDbPersistence, collection, getDocs, deleteDoc, writeBatch } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
-  window.firebaseModules = { initializeApp, getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, getFirestore, doc, setDoc, getDoc, onSnapshot, serverTimestamp, enableIndexedDbPersistence, collection, getDocs, deleteDoc, writeBatch };
+  import { getFirestore, doc, setDoc, getDoc, getDocFromServer, getDocsFromServer, onSnapshot, serverTimestamp, collection, getDocs, deleteDoc, writeBatch, runTransaction, waitForPendingWrites, terminate, clearIndexedDbPersistence } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+  window.firebaseModules = { initializeApp, getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, getFirestore, doc, setDoc, getDoc, getDocFromServer, getDocsFromServer, onSnapshot, serverTimestamp, collection, getDocs, deleteDoc, writeBatch, runTransaction, waitForPendingWrites, terminate, clearIndexedDbPersistence };
   window.dispatchEvent(new Event('firebase-ready'));
 </script>
 <style>
@@ -1101,7 +1101,7 @@ label.field { display: block; font-size: 11px; text-transform: uppercase; letter
         <button type="submit" class="btn btn-primary" id="loginSubmit">Se connecter</button>
         <div class="login-error" id="loginError"></div>
       </form>
-      <div class="login-footer">By Lou · TikPerf v1.7.27 · 2026</div>
+      <div class="login-footer">By Lou · TikPerf v1.7.28 · 2026</div>
     </div>
   </div>
 
@@ -1134,7 +1134,7 @@ label.field { display: block; font-size: 11px; text-transform: uppercase; letter
     </button>
     <div class="brand">
       <img src="data:image/jpeg;base64,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" alt="By Lou">
-      <div class="brand-tag">TikPerf · v1.7.27</div>
+      <div class="brand-tag">TikPerf · v1.7.28</div>
     </div>
     <nav class="nav">
       <button class="nav-btn active" data-page="dashboard"><span class="ico">◐</span> Tableau de bord</button>
@@ -1147,7 +1147,7 @@ label.field { display: block; font-size: 11px; text-transform: uppercase; letter
       <button class="nav-btn" data-page="commandes"><span class="ico">≡</span> Commandes</button>
       <button class="nav-btn" data-page="parametres"><span class="ico">⚙</span> Paramètres</button>
     </nav>
-    <div class="nav-footer">By Lou · TikPerf v1.7.27<br>2026</div>
+    <div class="nav-footer">By Lou · TikPerf v1.7.28<br>2026</div>
   </aside>
 
   <!-- ============ MAIN ============ -->
@@ -1664,7 +1664,7 @@ label.field { display: block; font-size: 11px; text-transform: uppercase; letter
         <div class="card-sub">Sync temps réel avec Firebase Firestore · cache local pour mode hors-ligne</div>
         <div style="margin-top:14px; font-size:13px;" id="storageInfo"></div>
         <div style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap;">
-          <button class="btn btn-primary" onclick="forceFullSync()" title="Repousse toutes tes données vers le cloud — utile si l'app ne s'affiche pas sur un autre appareil">⟳ Forcer synchro complète</button>
+          <button class="btn btn-primary" onclick="reloadFromCloudButton()" title="Remplace les données de cet appareil par celles du cloud">⟳ Recharger depuis le cloud</button>
           <button class="btn btn-primary" onclick="dedupeOrders()" title="Supprime les lignes de commande en double (identiques) accumulées par d'anciennes synchros">🧹 Nettoyer les doublons</button>
           <button class="btn btn-ghost" onclick="exportFullBackup()">Exporter (.json)</button>
           <button class="btn btn-ghost" onclick="document.getElementById('restoreInput').click()">Importer (.json)</button>
@@ -1677,7 +1677,7 @@ label.field { display: block; font-size: 11px; text-transform: uppercase; letter
       <div class="card">
         <div class="card-title">À propos</div>
         <div style="font-size:13px; line-height:1.7; color:var(--ink-700);">
-          <p><strong>TikPerf By Lou</strong> · v1.7.27 · Mai 2026</p>
+          <p><strong>TikPerf By Lou</strong> · v1.7.28 · Mai 2026</p>
           <p>App PWA pour analyser les performances TikTok Shop : marges, charges, coûts d'achat, top produits, avec sync multi-appareils via Firebase.</p>
           <p style="margin-top:8px;">Source : exports Income TikTok Shop (.xlsx). Données chiffrées et privées à ton compte.</p>
         </div>
@@ -1713,13 +1713,12 @@ label.field { display: block; font-size: 11px; text-transform: uppercase; letter
 
 <script>
 /* ============================================================
-   TikPerf By Lou — v1.7.27
+   TikPerf By Lou — v1.7.28
    PWA + Firebase Firestore sync + Auth
    ============================================================ */
 
 const LS_KEY = 'tikperf_bylou_v1';
 const LS_KEY_BACKUP = 'tikperf_bylou_v1_backup';     // Always-on rolling backup (last good state)
-const LS_KEY_PRE_CLOUD = 'tikperf_bylou_v1_pre_cloud'; // Snapshot of state before cloud overwrites it
 const FMT = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const FMT0 = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
 const FMT_PCT = (v) => (v === null || isNaN(v) || !isFinite(v)) ? '—' : (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
@@ -1768,11 +1767,18 @@ const state = {
     syncStatus: 'offline', // 'offline' | 'syncing' | 'synced' | 'error'
     lastSync: null,
     unsubscribe: null,     // Firestore listener unsubscribe fn
-    pendingSave: false,    // debounce flag
-    saveTimer: null,
-    lastLocalChange: 0,    // timestamp of last local edit (guards listener overwrite)
-    lastMergeTs: 0,        // timestamp of last conflict merge (cooldown)
-    criticalOp: false      // true pendant dedup/reset — bloque totalement le listener
+    saveTimer: null,       // envoi différé (800 ms)
+    pushing: false,        // un envoi est en cours
+    pushQueued: false,     // un autre envoi a été demandé pendant l'envoi en cours
+    rev: 0,                // révision du cloud sur laquelle repose l'état local
+    resetEpoch: 0,         // époque de reset connue (change à chaque « Tout réinitialiser »)
+    monthKeys: [],         // chunks de commandes référencés par le cloud
+    changeSeq: 0,          // compteur de modifications locales…
+    pushedSeq: 0,          // …et dernier compteur envoyé (différent = modifs en attente)
+    ordersSeq: 0,          // idem pour les lignes de commande
+    pushedOrdersSeq: 0,
+    lastOrdersLength: 0,
+    criticalOp: false      // true pendant le reset — bloque l'écoute temps réel
   }
 };
 
@@ -1793,10 +1799,12 @@ function bootFirebase() {
     const app = M.initializeApp(FIREBASE_CONFIG);
     const auth = M.getAuth(app);
     const db = M.getFirestore(app);
-    M.enableIndexedDbPersistence(db).catch((err) => {
-      console.warn('Firestore offline persistence not enabled:', err.code);
+    // v1.7.28 : plus de persistance IndexedDB (elle rejouait de vieilles écritures).
+    // On efface le cache laissé par les versions précédentes avant la 1re lecture.
+    const ready = M.clearIndexedDbPersistence(db).catch((err) => {
+      console.warn('Ancien cache Firestore non effacé :', err.code || err.message);
     });
-    fb = { app, auth, db, M };
+    fb = { app, auth, db, M, ready };
 
     M.onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -1887,36 +1895,47 @@ function setSyncStatus(status, label) {
   lbl.textContent = label || labels[status];
 }
 
-/* ============ CLOUD SYNC ============ */
-function userDocRef() {
-  if (!fb || !state.cloud.user) return null;
-  return fb.M.doc(fb.db, 'users', state.cloud.user.uid);
+/* ============ CLOUD SYNC (v1.7.28) ============
+   Le cloud est la SEULE source de vérité.
+   - shared/bylou porte un numéro de révision (rev) et une époque de reset (resetEpoch).
+   - Chaque écriture passe par une transaction qui vérifie que l'appareil part de la
+     dernière révision. Un appareil en retard ne peut plus écraser le cloud : il recharge.
+   - Les commandes sont lues UNIQUEMENT via monthKeys. Chaque envoi crée des chunks au
+     nom unique, puis bascule monthKeys d'un coup : deux appareils ne s'écrasent jamais
+     morceau par morceau, et un envoi interrompu ne laisse que des chunks non référencés.
+   - Pas de persistance IndexedDB : aucune vieille écriture ne peut être rejouée par un
+     appareil resté hors ligne. Le cache local (localStorage) sert seulement à afficher
+     les données hors ligne, il n'est jamais fusionné dans le cloud.
+================================================ */
+const SCHEMA_VERSION = 3;
+
+function defaultSettings() {
+  return { vatMode: 'ttc_20', vatCustomRate: 20, excludeRefundedFromCogs: true, autresCharges: {}, acDisplayMode: 'nominal', achats: {}, achatsTransport: {} };
 }
 
-/* Smart merge: combine two sets of orders.
-   v1.7.27 FIX: dedup uses the SAME full-row signature + occurrence counting as the
-   import path (handleFile). Previously this used only (Statement|Order|SKU), which
-   collapsed legitimately-split TikTok rows (merchandise + shipping share that trio)
-   and caused the CA to drift by a few euros on every forced sync. Now a row from B
-   is treated as a duplicate of A only when an IDENTICAL row (all columns) exists in
-   A the same number of times — re-merging the same data is a perfect no-op. */
+/* Signature d'une ligne de commande : toutes les colonnes TikTok, sauf nos champs
+   internes (préfixe "__", ex. __imp = fichier d'origine). */
+function rowSig(o) {
+  return Object.keys(o).filter(k => !k.startsWith('__')).sort().map(k => `${k}=${o[k]}`).join('\u0001');
+}
+
+/* Smart merge: combine two sets of orders (utilisé par « Restaurer sauvegarde auto »).
+   Une ligne de B n'est un doublon que si une ligne IDENTIQUE existe dans A le même
+   nombre de fois — re-fusionner les mêmes données ne change rien. */
 function mergeOrders(a, b) {
-  const sigOf = (o) => Object.keys(o).sort().map(k => `${k}=${o[k]}`).join('\u0001');
   const counts = new Map();
   const out = [];
-  // Keep everything from A, recording how many times each identical row appears
   for (const o of a) {
-    const s = sigOf(o);
+    const s = rowSig(o);
     counts.set(s, (counts.get(s) || 0) + 1);
     out.push(o);
   }
-  // From B, only add rows that aren't already covered by A's occurrences
   let conflicts = 0;
   for (const o of b) {
-    const s = sigOf(o);
+    const s = rowSig(o);
     const remaining = counts.get(s) || 0;
     if (remaining > 0) {
-      counts.set(s, remaining - 1); // this B-row is already present in A → skip
+      counts.set(s, remaining - 1);
       conflicts++;
     } else {
       out.push(o);
@@ -1926,10 +1945,7 @@ function mergeOrders(a, b) {
 }
 
 function mergeImports(a, b) {
-  // v1.7.27 FIX: dedup par signature de CONTENU (nom+période+nb lignes), pas par
-  // importedAt. Réimporter le même fichier créait des importedAt différents, donc
-  // l'historique se multipliait à chaque fusion cloud. La signature de contenu est
-  // stable → un même fichier n'apparaît qu'une fois, quel que soit le nombre d'imports.
+  // Dédup par signature de CONTENU (nom+période+nb lignes), stable entre appareils.
   const sigOf = (imp) => imp.contentSig || `${imp.filename}|${imp.period || ''}|${imp.rowCount || ''}`;
   const seen = new Set();
   const out = [];
@@ -1973,12 +1989,10 @@ function groupOrdersByMonth(orders) {
   return byMonth;
 }
 
-/* Reference helpers */
 /* ─────────────────────────────────────────────────────────────────────────
    FIRESTORE REFERENCES — Espace partagé "shared/bylou"
-   Toutes les personnes connectées lisent et écrivent au même endroit.
-   L'ancien espace per-user (users/{uid}) n'est lu qu'une seule fois,
-   pour la migration automatique au premier login.
+   L'ancien espace per-user (users/{uid}) n'est plus lu : il est seulement purgé
+   par « Tout réinitialiser ».
    ───────────────────────────────────────────────────────────────────────── */
 const SHARED_ID = 'bylou'; // identifiant fixe de l'espace partagé
 
@@ -1986,212 +2000,250 @@ function userDocRefMain() {
   if (!fb) return null;
   return fb.M.doc(fb.db, 'shared', SHARED_ID);
 }
-function userMonthDocRef(monthKey) {
+function userMonthDocRef(chunkKey) {
   if (!fb) return null;
-  return fb.M.doc(fb.db, 'shared', SHARED_ID, 'months', monthKey);
+  return fb.M.doc(fb.db, 'shared', SHARED_ID, 'months', chunkKey);
 }
 function userMonthsCollectionRef() {
   if (!fb) return null;
   return fb.M.collection(fb.db, 'shared', SHARED_ID, 'months');
 }
-/* Ancien espace per-user — lecture unique pour migration */
-function legacyUserDocRef()       { if (!fb || !state.cloud.user) return null; return fb.M.doc(fb.db, 'users', state.cloud.user.uid); }
-function legacyUserMonthsRef()    { if (!fb || !state.cloud.user) return null; return fb.M.collection(fb.db, 'users', state.cloud.user.uid, 'months'); }
+function legacyUserDocRef()    { if (!fb || !state.cloud.user) return null; return fb.M.doc(fb.db, 'users', state.cloud.user.uid); }
+function legacyUserMonthsRef() { if (!fb || !state.cloud.user) return null; return fb.M.collection(fb.db, 'users', state.cloud.user.uid, 'months'); }
+
+/* ─── CHUNKS (limite 1 Mo par document Firestore) ──────────────────────────
+   Un mois est découpé en tranches de 350 lignes max ET ~600 Ko max.
+   Nom : "2026-08_<pushId>_0" — pushId est unique à chaque envoi.
+   ─────────────────────────────────────────────────────────────────────── */
+const MAX_CHUNK_ORDERS = 350;
+const MAX_CHUNK_CHARS = 600000;
+
+function buildChunks(byMonth, pushId) {
+  const chunks = [];
+  for (const [month, orders] of Object.entries(byMonth)) {
+    let part = [], size = 0, idx = 0;
+    for (const o of orders) {
+      const s = JSON.stringify(o).length;
+      if (part.length && (part.length >= MAX_CHUNK_ORDERS || size + s > MAX_CHUNK_CHARS)) {
+        chunks.push({ chunkKey: `${month}_${pushId}_${idx}`, month, part });
+        part = []; size = 0; idx++;
+      }
+      part.push(o);
+      size += s;
+    }
+    if (part.length) chunks.push({ chunkKey: `${month}_${pushId}_${idx}`, month, part });
+  }
+  return chunks;
+}
+
+/* Supprime des chunks par lots (writeBatch, 400 max par lot) */
+async function deleteChunks(keys) {
+  for (let i = 0; i < keys.length; i += 400) {
+    const batch = fb.M.writeBatch(fb.db);
+    keys.slice(i, i + 400).forEach(k => batch.delete(userMonthDocRef(k)));
+    await batch.commit();
+  }
+}
+
+/* Supprime tous les documents d'une collection, lus sur le SERVEUR */
+async function deleteAllDocsFromServer(colRef) {
+  for (let pass = 0; pass < 3; pass++) {
+    const snap = await fb.M.getDocsFromServer(colRef);
+    if (snap.empty) return;
+    const refs = [];
+    snap.forEach(d => refs.push(d.ref));
+    for (let i = 0; i < refs.length; i += 400) {
+      const batch = fb.M.writeBatch(fb.db);
+      refs.slice(i, i + 400).forEach(r => batch.delete(r));
+      await batch.commit();
+    }
+  }
+}
+
+/* Lit l'état complet du cloud depuis le SERVEUR : doc principal + chunks listés
+   dans monthKeys (et seulement ceux-là). */
+async function loadCloudState() {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const mainSnap = await fb.M.getDocFromServer(userDocRefMain());
+    if (!mainSnap.exists()) return null;
+    const main = mainSnap.data();
+    let keys, orders = [], missing = [];
+    if (Array.isArray(main.monthKeys)) {
+      keys = main.monthKeys;
+      const snaps = await Promise.all(keys.map(k => fb.M.getDocFromServer(userMonthDocRef(k))));
+      snaps.forEach((s, i) => {
+        if (!s.exists()) { missing.push(keys[i]); return; }
+        orders.push(...(s.data().orders || []));
+      });
+    } else if (Array.isArray(main.orders)) {
+      keys = [];                       // très ancien schéma v1 (tout dans un seul doc)
+      orders = main.orders;
+    } else {
+      keys = [];
+    }
+    if (missing.length) {
+      // Un autre appareil vient sans doute d'envoyer une nouvelle version : on relit.
+      const again = await fb.M.getDocFromServer(userDocRefMain());
+      if (again.exists() && (again.data().rev || 0) !== (main.rev || 0)) continue;
+      console.error('Chunks manquants :', missing);
+      toast(`⚠ ${missing.length} morceau(x) de commandes introuvable(s) dans le cloud. Les chiffres peuvent être incomplets.`, 'error');
+    }
+    return {
+      orders,
+      monthKeys: keys,
+      imports: main.imports || [],
+      catalogue: normalizeCatalogue(main.catalogue),
+      settings: main.settings || {},
+      rev: main.rev || 0,
+      resetEpoch: main.resetEpoch || 0
+    };
+  }
+  throw new Error('Le cloud change trop vite, réessaie dans un instant');
+}
+
+function emptyCloudState() {
+  return { orders: [], monthKeys: [], imports: [], catalogue: { byProduct: {}, byVariant: {} }, settings: {}, rev: 0, resetEpoch: 0 };
+}
+
+/* Remplace TOUT l'état local par l'état du cloud */
+function applyCloudState(cs) {
+  state.orders = cs.orders;
+  state.imports = cs.imports;
+  state.catalogue = normalizeCatalogue(cs.catalogue);
+  state.settings = { ...defaultSettings(), ...(cs.settings || {}) };
+  state.cloud.rev = cs.rev;
+  state.cloud.resetEpoch = cs.resetEpoch;
+  state.cloud.monthKeys = cs.monthKeys;
+  state.cloud.lastOrdersLength = state.orders.length;
+  state.cloud.pushedSeq = state.cloud.changeSeq;
+  state.cloud.pushedOrdersSeq = state.cloud.ordersSeq;
+  state.cloud.lastSync = new Date().toISOString();
+  writeLocalCache();
+}
+
+function hasPendingChanges() { return state.cloud.changeSeq !== state.cloud.pushedSeq; }
+function hasPendingOrders()  { return state.cloud.ordersSeq !== state.cloud.pushedOrdersSeq; }
+
+/* Recharge tout depuis le cloud (une seule exécution à la fois) */
+let _reloadPromise = null;
+function reloadFromCloud() {
+  if (_reloadPromise) return _reloadPromise;
+  _reloadPromise = (async () => {
+    setSyncStatus('syncing');
+    const previousEpoch = state.cloud.resetEpoch;
+    const cs = (await loadCloudState()) || emptyCloudState();
+    if (cs.resetEpoch !== previousEpoch) {
+      // Réinitialisation faite ailleurs : on jette aussi la sauvegarde auto locale
+      try { localStorage.removeItem(LS_KEY_BACKUP); } catch (e) { /* non-fatal */ }
+    }
+    applyCloudState(cs);
+    setSyncStatus('synced');
+    renderCurrentPageSafe();
+    return cs;
+  })().finally(() => { _reloadPromise = null; });
+  return _reloadPromise;
+}
+
+async function reloadFromCloudButton() {
+  if (!fb || !state.cloud.user) { toast('Pas connecté au cloud', 'error'); return; }
+  if (hasPendingChanges() && !confirm('Des modifications de cet appareil ne sont pas encore envoyées. Les abandonner et recharger depuis le cloud ?')) return;
+  try {
+    const cs = await reloadFromCloud();
+    toast(`✓ Rechargé depuis le cloud — ${cs.orders.length} lignes, révision ${cs.rev}`, 'success');
+  } catch (err) {
+    setSyncStatus('error', 'Erreur : ' + (err.code || err.message));
+    toast('Échec du rechargement : ' + (err.code || err.message), 'error');
+  }
+}
 
 async function startCloudSync() {
   if (!fb || !state.cloud.user) return;
   state.cloud.enabled = true;
   setSyncStatus('syncing');
+  try { await fb.ready; } catch (e) { /* non-fatal */ }
 
   try {
-    // ── ÉTAPE 0 : Migration auto depuis l'ancien espace per-user ────────────
-    // Si l'espace partagé est vide ET que l'utilisateur a des données dans
-    // son ancien espace users/{uid}, on les copie vers shared/bylou.
-    const sharedMainRef   = userDocRefMain();
-    const sharedMonthsRef = userMonthsCollectionRef();
-    const sharedMainSnap  = await fb.M.getDoc(sharedMainRef);
-    const sharedMonthsSnap = await fb.M.getDocs(sharedMonthsRef);
-    const sharedIsEmpty = !sharedMainSnap.exists() && sharedMonthsSnap.empty;
-
-    // v1.7.27 FIX: migration une seule fois (drapeau). Sans ça, vider les données
-    // relançait la migration qui restaurait tout depuis l'ancien espace perso.
-    const MIGRATION_FLAG = 'tikperf_bylou_migration_done';
-    const migrationDoneLocal = localStorage.getItem(MIGRATION_FLAG) === '1';
-    const migrationDoneCloud = sharedMainSnap.exists() && sharedMainSnap.data().migrationDone === true;
-
-    if (sharedIsEmpty && !migrationDoneLocal && !migrationDoneCloud && state.cloud.user) {
-      const legacyMainRef    = legacyUserDocRef();
-      const legacyMonthsRef  = legacyUserMonthsRef();
-      if (legacyMainRef && legacyMonthsRef) {
-        const [legacyMain, legacyMonths] = await Promise.all([
-          fb.M.getDoc(legacyMainRef),
-          fb.M.getDocs(legacyMonthsRef)
-        ]);
-        const hasLegacyData = legacyMain.exists() || !legacyMonths.empty;
-        if (hasLegacyData) {
-          console.log('Migration: copie des données perso vers espace partagé shared/bylou…');
-          setSyncStatus('syncing');
-          // Copier le doc principal
-          if (legacyMain.exists()) {
-            await fb.M.setDoc(sharedMainRef, { ...legacyMain.data(), migrationDone: true, migratedAt: fb.M.serverTimestamp() });
-          }
-          // Copier chaque sous-doc mensuel
-          const monthJobs = [];
-          legacyMonths.forEach(d => {
-            monthJobs.push(fb.M.setDoc(
-              fb.M.doc(fb.db, 'shared', SHARED_ID, 'months', d.id),
-              d.data()
-            ));
-          });
-          await Promise.all(monthJobs);
-          toast('✓ Données migrées vers l\'espace partagé By Lou', 'success');
-          console.log(`Migration terminée : ${monthJobs.length} mois copiés`);
-        }
-      }
-      localStorage.setItem(MIGRATION_FLAG, '1');
-    } else if (!migrationDoneLocal) {
-      // Espace partagé déjà rempli ou déjà migré → marquer la migration faite
-      // pour ne JAMAIS la relancer (sinon vider les données restaure tout).
-      localStorage.setItem(MIGRATION_FLAG, '1');
-    }
-    // ── FIN MIGRATION ───────────────────────────────────────────────────────
-
-    // 1) Load cloud data: main doc (settings, catalogue, imports list) + all month subdocs
-    const mainRef   = userDocRefMain();
-    const monthsRef = userMonthsCollectionRef();
-
-    const [mainSnap, monthsSnap] = await Promise.all([
-      fb.M.getDoc(mainRef),
-      fb.M.getDocs(monthsRef)
-    ]);
-
-    // Detect legacy v1 schema: main doc has orders directly (1 big doc)
-    let legacyOrders = null;
-    if (mainSnap.exists()) {
-      const m = mainSnap.data();
-      if (m.orders && Array.isArray(m.orders) && m.orders.length > 0 && monthsSnap.empty) {
-        console.log(`Detected legacy v1 schema with ${m.orders.length} orders — migrating to multi-doc layout`);
-        legacyOrders = m.orders;
-      }
-    }
-
-    const cloudExists = mainSnap.exists() || !monthsSnap.empty;
-    const cloudMain = mainSnap.exists() ? mainSnap.data() : null;
-    const cloudOrders = legacyOrders || [];
-    monthsSnap.forEach(d => {
-      const data = d.data();
-      if (data.orders) cloudOrders.push(...data.orders);
-    });
-    const cloudData = cloudExists ? {
-      orders: cloudOrders,
-      imports: (cloudMain && cloudMain.imports) || [],
-      catalogue: (cloudMain && cloudMain.catalogue) || { byProduct: {}, byVariant: {} },
-      settings: (cloudMain && cloudMain.settings) || {}
-    } : null;
-
-    const localRaw = localStorage.getItem(LS_KEY);
-    const localData = localRaw ? JSON.parse(localRaw) : null;
-
-    if (cloudExists && localData) {
-      // Both exist → MERGE to prevent data loss
-      const { orders: mergedOrders } = mergeOrders(
-        cloudData.orders || [],
-        localData.orders || []
-      );
-      state.orders = mergedOrders;
-      state.imports = mergeImports(cloudData.imports || [], localData.imports || []);
-      state.catalogue = mergeCatalogue(cloudData.catalogue, localData.catalogue);
-      state.settings = { ...state.settings, ...(localData.settings || {}), ...(cloudData.settings || {}) };
-
-      const cloudCount = (cloudData.orders || []).length;
-      const localCount = (localData.orders || []).length;
-      if (mergedOrders.length > Math.max(cloudCount, localCount)) {
-        toast(`✓ Fusion : ${cloudCount} (cloud) + ${localCount} (local) → ${mergedOrders.length} lignes`, 'success');
-        await pushToCloud();
-      } else {
-        setSyncStatus('synced');
-      }
-    } else if (cloudExists) {
-      applyCloudData(cloudData);
-      setSyncStatus('synced');
-    } else if (localData) {
-      // No cloud yet — push local to cloud
-      Object.assign(state, {
-        orders: localData.orders || [],
-        imports: localData.imports || [],
-        catalogue: normalizeCatalogue(localData.catalogue),
-        settings: { ...state.settings, ...(localData.settings || {}) }
-      });
-      await pushToCloud();
+    const cs = await loadCloudState();
+    const local = readLocalCache();
+    if (cs && local && local.pending && local.resetEpoch === cs.resetEpoch && local.cloudRev === cs.rev) {
+      // Modifications faites hors ligne sur la DERNIÈRE version du cloud : on les garde
+      // et on les envoie (la transaction vérifiera encore la révision).
+      applyLocalCache(local);
+      state.cloud.rev = cs.rev;
+      state.cloud.resetEpoch = cs.resetEpoch;
+      state.cloud.monthKeys = cs.monthKeys;
+      schedulePush(0);
     } else {
-      // Truly empty — first ever launch
-      await pushToCloud();
-    }
-
-    // 2) Subscribe to real-time updates on main doc (settings/catalogue/imports list)
-    // We don't subscribe to all monthly docs to avoid massive listener overhead;
-    // months change on import only, which is a known event.
-    state.cloud.unsubscribe = fb.M.onSnapshot(mainRef, (snap) => {
-      if (!snap.exists()) return;
-      if (snap.metadata.hasPendingWrites) return;
-
-      // GUARD: if a local change (import/delete/cost edit) is queued or just happened,
-      // don't let an in-flight remote snapshot overwrite it. The pending push will
-      // become the source of truth. Without this, deleting an import "bounces back"
-      // because the remote doc hasn't received our deletion yet.
-      if (state.cloud.criticalOp) return;   // opération critique (dedup/reset) en cours
-      if (state.cloud.saveTimer) return;
-      if (state.cloud.lastLocalChange && (Date.now() - state.cloud.lastLocalChange) < 3000) return;
-
-      const remote = snap.data();
-      const remoteImports = remote.imports || [];
-
-      // v1.7.27: si l'historique distant contient PLUS d'imports que le nôtre après
-      // un nettoyage, ne PAS l'accepter tel quel — re-dédupliquer par signature de
-      // contenu pour ne jamais réintroduire de doublons venus du cloud.
-      const dedupBySig = (list) => {
-        const sigOf = (imp) => imp.contentSig || `${imp.filename}|${imp.period || ''}|${imp.rowCount || ''}`;
-        const seen = new Set(); const out = [];
-        for (const imp of list) { const k = sigOf(imp); if (!seen.has(k)) { seen.add(k); out.push(imp); } }
-        return out;
-      };
-
-      // If remote imports list shows fewer imports than we know locally, conflict
-      if (remoteImports.length < state.imports.length && state.imports.length > 0) {
-        const now = Date.now();
-        if (state.cloud.lastMergeTs && (now - state.cloud.lastMergeTs) < 10000) return;
-        const mergedImports = mergeImports(remoteImports, state.imports);
-        if (mergedImports.length === remoteImports.length) return; // nothing new
-        state.cloud.lastMergeTs = now;
-        state.imports = mergedImports;
-        state.catalogue = mergeCatalogue(remote.catalogue, state.catalogue);
-        state.settings = { ...state.settings, ...(remote.settings || {}) };
-        writeLocalCache();
-        pushToCloud();
-        toast('⚠ Conflit détecté — données fusionnées', 'warn');
-      } else {
-        // Accept remote settings/catalogue/imports list, keep our orders (months are separate)
-        // v1.7.27: toujours dédupliquer l'historique distant par signature de contenu.
-        state.imports = dedupBySig(remoteImports);
-        state.catalogue = normalizeCatalogue(remote.catalogue);
-        state.settings = { ...state.settings, ...(remote.settings || {}) };
-        writeLocalCache();
+      if (local && local.pending) {
+        toast('⚠ Des modifications faites hors ligne sur cet appareil ont été abandonnées : le cloud a changé entre-temps.', 'warn');
       }
+      applyCloudState(cs || emptyCloudState());
       setSyncStatus('synced');
-      renderCurrentPageSafe();
-    }, (err) => {
-      console.error('Firestore listen error:', err);
-      setSyncStatus('error');
-    });
-
+    }
+    subscribeMainDoc();
     renderCurrentPage();
-    preloadAchatsIfEmpty();
   } catch (err) {
     console.error('Initial sync failed:', err);
-    setSyncStatus('error', 'Erreur : ' + err.message);
-    loadFromLocalCache();
-    preloadAchatsIfEmpty();
+    // Hors ligne : on affiche le cache local. Rien n'est poussé tant que le cloud
+    // n'a pas été relu (voir l'écouteur "online").
+    const local = readLocalCache();
+    if (local) applyLocalCache(local);
+    setSyncStatus('error', err.code === 'unavailable' ? 'Hors ligne' : 'Erreur : ' + (err.code || err.message));
     renderCurrentPage();
+  }
+}
+
+/* Écoute temps réel du doc principal. Il porte rev + monthKeys : un changement de
+   commandes sur un autre appareil change aussi ce doc, donc on le voit ici. */
+function subscribeMainDoc() {
+  if (state.cloud.unsubscribe) { try { state.cloud.unsubscribe(); } catch (e) {} }
+  state.cloud.unsubscribe = fb.M.onSnapshot(userDocRefMain(), (snap) => {
+    if (snap.metadata.hasPendingWrites || snap.metadata.fromCache) return;
+    if (state.cloud.criticalOp) return;
+    handleRemoteMain(snap).catch(err => {
+      console.error('Remote update failed:', err);
+      setSyncStatus('error', 'Erreur : ' + (err.code || err.message));
+    });
+  }, (err) => {
+    console.error('Firestore listen error:', err);
+    setSyncStatus('error', 'Erreur : ' + (err.code || err.message));
+  });
+}
+
+async function handleRemoteMain(snap) {
+  if (!snap.exists()) {
+    // Doc principal supprimé (à la main dans la console) : le cloud est vide.
+    if (state.cloud.rev === 0 && !state.orders.length) return;
+    await reloadFromCloud();
+    toast('Le cloud a été vidé — données locales effacées', 'warn');
+    return;
+  }
+  const d = snap.data();
+  const remoteRev = d.rev || 0;
+  const remoteEpoch = d.resetEpoch || 0;
+
+  if (remoteEpoch !== state.cloud.resetEpoch) {
+    state.cloud.pushedSeq = state.cloud.changeSeq; // modifications locales abandonnées
+    await reloadFromCloud();
+    toast('Les données ont été réinitialisées depuis un autre appareil', 'warn');
+    return;
+  }
+  if (remoteRev <= state.cloud.rev) return;     // notre propre envoi, ou plus ancien
+  if (state.cloud.pushing || hasPendingChanges()) return; // l'envoi en cours détectera le conflit
+
+  const sameKeys = JSON.stringify(d.monthKeys || []) === JSON.stringify(state.cloud.monthKeys || []);
+  if (sameKeys) {
+    // Seuls les réglages / coûts / historique ont changé
+    state.imports = d.imports || [];
+    state.catalogue = normalizeCatalogue(d.catalogue);
+    state.settings = { ...defaultSettings(), ...(d.settings || {}) };
+    state.cloud.rev = remoteRev;
+    state.cloud.lastSync = new Date().toISOString();
+    writeLocalCache();
+    setSyncStatus('synced');
+    renderCurrentPageSafe();
+  } else {
+    await reloadFromCloud();                     // les commandes ont changé
   }
 }
 
@@ -2217,28 +2269,33 @@ function normalizeCatalogue(c) {
   return { byProduct: {}, byVariant };
 }
 
-function applyCloudData(data) {
+function readLocalCache() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    console.error('Local cache read failed:', e);
+    return null;
+  }
+}
+
+function applyLocalCache(data) {
   state.orders = data.orders || [];
   state.imports = data.imports || [];
   state.catalogue = normalizeCatalogue(data.catalogue);
-  state.settings = { ...state.settings, ...(data.settings || {}) };
-  // Always write to local cache for offline access
-  writeLocalCache();
-  state.cloud.lastSync = new Date().toISOString();
+  state.settings = { ...defaultSettings(), ...(data.settings || {}) };
+  state.cloud.rev = data.cloudRev || 0;
+  state.cloud.resetEpoch = data.resetEpoch || 0;
+  state.cloud.monthKeys = data.monthKeys || [];
+  state.cloud.lastOrdersLength = state.orders.length;
+  // Restaurer l'information "modifications pas encore envoyées"
+  state.cloud.pushedSeq = state.cloud.changeSeq - (data.pending ? 1 : 0);
+  state.cloud.pushedOrdersSeq = state.cloud.ordersSeq - (data.pendingOrders ? 1 : 0);
 }
 
 function loadFromLocalCache() {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (!raw) return;
-    const data = JSON.parse(raw);
-    state.orders = data.orders || [];
-    state.imports = data.imports || [];
-    state.catalogue = normalizeCatalogue(data.catalogue);
-    state.settings = { ...state.settings, ...(data.settings || {}) };
-  } catch (e) {
-    console.error('Local cache load failed:', e);
-  }
+  const data = readLocalCache();
+  if (data) applyLocalCache(data);
 }
 
 function writeLocalCache() {
@@ -2248,6 +2305,11 @@ function writeLocalCache() {
       imports: state.imports,
       catalogue: state.catalogue,
       settings: state.settings,
+      cloudRev: state.cloud.rev,
+      resetEpoch: state.cloud.resetEpoch,
+      monthKeys: state.cloud.monthKeys,
+      pending: hasPendingChanges(),
+      pendingOrders: hasPendingOrders(),
       cachedAt: new Date().toISOString()
     }));
   } catch (e) {
@@ -2268,14 +2330,12 @@ async function restoreFromBackupSlot() {
     if (!confirm(`Restaurer la sauvegarde automatique précédente ?\n\n• ${ordersCount} ligne(s) de commande\n• ${importsCount} fichier(s) importé(s)\n\nL'état actuel sera fusionné avec la sauvegarde (les nouvelles données seront conservées).`)) {
       return;
     }
-    // Merge: keep current + backup, dedup
     const { orders: merged } = mergeOrders(state.orders, data.orders || []);
     state.orders = merged;
     state.imports = mergeImports(state.imports, data.imports || []);
     state.catalogue = mergeCatalogue(state.catalogue, data.catalogue);
     state.settings = { ...state.settings, ...(data.settings || {}) };
-    saveState();
-    if (state.cloud.enabled) await pushToCloud();
+    saveState({ orders: true });
     renderCurrentPage();
     toast(`✓ Sauvegarde fusionnée — ${state.orders.length} lignes au total`, 'success');
   } catch (err) {
@@ -2283,27 +2343,20 @@ async function restoreFromBackupSlot() {
   }
 }
 
-/* Nettoie les doublons de commandes accumulés par d'anciennes synchros/imports
-   multiples. Deux lignes sont "en double" si TOUTES leurs colonnes sont identiques.
-   On conserve, pour chaque ligne d'import légitime, le nombre d'exemplaires attendu :
-   on déduit ce nombre du nombre de fois où le MÊME fichier a été importé (si un
-   fichier a été importé 3×, chaque ligne doit rester en 1 seul exemplaire).
-   Pour rester simple et sûr, on réduit chaque groupe de lignes strictement
-   identiques à UN seul exemplaire — ce qui corrige les ré-imports en double/triple. */
+/* Nettoie les doublons de commandes : deux lignes sont "en double" si TOUTES leurs
+   colonnes TikTok sont identiques. Chaque groupe est réduit à UN exemplaire. */
 async function dedupeOrders() {
   const before = state.orders.length;
-  const sigOf = (o) => Object.keys(o).sort().map(k => `${k}=${o[k]}`).join('\u0001');
   const seen = new Set();
   const cleaned = [];
   for (const o of state.orders) {
-    const s = sigOf(o);
-    if (seen.has(s)) continue; // doublon exact → on saute
+    const s = rowSig(o);
+    if (seen.has(s)) continue;
     seen.add(s);
     cleaned.push(o);
   }
   const removedRows = before - cleaned.length;
 
-  // Nettoyer aussi l'historique des imports par signature de contenu (stable)
   const impSig = (imp) => imp.contentSig || `${imp.filename}|${imp.period || ''}|${imp.rowCount || ''}`;
   const seenImp = new Set();
   const beforeImp = state.imports.length;
@@ -2322,7 +2375,6 @@ async function dedupeOrders() {
   if (!confirm(`Nettoyage des doublons :\n\n• ${removedRows} ligne(s) de commande en double\n• ${removedImp} entrée(s) d'historique en double\n\nGarder ${cleaned.length} lignes et ${cleanedImports.length} imports uniques ?\n\n(Une sauvegarde automatique est conservée.)`)) {
     return;
   }
-  // Backup avant nettoyage
   try {
     const current = localStorage.getItem(LS_KEY);
     if (current) localStorage.setItem(LS_KEY_BACKUP, current);
@@ -2330,125 +2382,24 @@ async function dedupeOrders() {
 
   state.orders = cleaned;
   state.imports = cleanedImports;
-  // Écriture locale + push IMMÉDIAT (pas de debounce) pour que le cloud reçoive
-  // la version nettoyée avant que le listener ne puisse restaurer les doublons.
-  writeLocalCache();
-  state.cloud.lastLocalChange = Date.now();
-  state.cloud.criticalOp = true;            // bloque le listener pendant l'opération
-  if (state.cloud.enabled) {
-    try {
-      await pushToCloud();                   // attend la fin du push (chunks + purge)
-    } catch (e) {
-      console.error('Push après dedup échoué:', e);
-    }
-  }
-  state.cloud.lastLocalChange = Date.now();  // re-marque après le push
-  setTimeout(() => { state.cloud.criticalOp = false; }, 4000); // fenêtre de sécurité
+  saveState({ orders: true, immediate: true });
   renderCurrentPage();
   toast(`✓ Nettoyé : ${removedRows} ligne(s) + ${removedImp} import(s) en double supprimés`, 'success');
 }
 
-async function forceFullSync() {
-  if (!fb || !state.cloud.user) {
-    toast('Pas connecté au cloud', 'error');
-    return;
-  }
-  if (!confirm(`Forcer la synchronisation complète vers le cloud ?\n\n${state.orders.length} lignes seront découpées en chunks et poussées vers Firestore.`)) return;
-
-  setSyncStatus('syncing');
-  try {
-    const byMonth   = groupOrdersByMonth(state.orders);
-    const chunks    = buildChunks(byMonth);
-    const chunkKeys = chunks.map(c => c.chunkKey);
-    console.log('Force sync — chunks:', chunkKeys);
-
-    // 1) Main doc
-    const mainRef = userDocRefMain();
-    await fb.M.setDoc(mainRef, {
-      catalogue: state.catalogue,
-      imports: state.imports,
-      settings: state.settings,
-      monthKeys: chunkKeys,
-      updatedAt: fb.M.serverTimestamp(),
-      schemaVersion: 2
-    });
-    console.log('✓ Main doc pushed');
-
-    // 2) Each chunk
-    let pushed = 0;
-    const errors = [];
-    for (const { chunkKey, month, part } of chunks) {
-      try {
-        await fb.M.setDoc(userMonthDocRef(chunkKey), { orders: part, month, chunkKey });
-        console.log(`✓ ${chunkKey}: ${part.length} ordres`);
-        pushed++;
-      } catch (e) {
-        console.error(`✗ ${chunkKey}:`, e);
-        errors.push(`${chunkKey}: ${e.message}`);
-      }
-    }
-
-    // 3) Purge obsolètes
-    const existingSnap = await fb.M.getDocs(userMonthsCollectionRef());
-    const deletions = [];
-    existingSnap.forEach(d => {
-      if (!chunkKeys.includes(d.id)) deletions.push(fb.M.deleteDoc(userMonthDocRef(d.id)));
-    });
-    if (deletions.length) await Promise.all(deletions);
-
-    setSyncStatus('synced');
-    state.cloud.lastSync = new Date().toISOString();
-    if (errors.length > 0) {
-      toast(`⚠ ${pushed}/${chunks.length} chunks synchronisés. Erreurs : ${errors.join(' | ')}`, 'error');
-    } else {
-      toast(`✓ Sync forcée — ${pushed} chunk(s), ${state.orders.length} lignes`, 'success');
-    }
-  } catch (err) {
-    console.error('Force sync failed:', err);
-    setSyncStatus('error');
-    toast('Échec : ' + err.message, 'error');
-  }
-}
-
-/* ─── CHUNK HELPERS (limite 1 MB Firestore) ────────────────────────────────
-   On divise chaque mois en tranches de MAX_CHUNK_ORDERS commandes maximum.
-   Nommage : "2026-05_0", "2026-05_1"… (suffixe _0 pour le premier chunk).
-   L'index monthKeys dans le doc principal liste les clés de chunks réels.
-   ─────────────────────────────────────────────────────────────────────── */
-const MAX_CHUNK_ORDERS = 350; // ~350 ordres ≈ 700–900 KB bien en-dessous du 1 MB
-
-function chunkArray(arr, size) {
-  const chunks = [];
-  for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size));
-  return chunks;
-}
-
-/* Transforme byMonth en liste de { chunkKey, orders } */
-function buildChunks(byMonth) {
-  const chunks = [];
-  for (const [month, orders] of Object.entries(byMonth)) {
-    const parts = chunkArray(orders, MAX_CHUNK_ORDERS);
-    parts.forEach((part, idx) => {
-      chunks.push({ chunkKey: `${month}_${idx}`, month, part });
-    });
-  }
-  return chunks;
-}
-
-/* Lit tous les chunks depuis Firestore et reconstitue un tableau d'ordres */
-async function readAllChunks(monthsSnap) {
-  const orders = [];
-  monthsSnap.forEach(d => {
-    const data = d.data();
-    if (data.orders) orders.push(...data.orders);
-  });
-  return orders;
-}
-
+/* Envoie l'état local au cloud.
+   1) écrit les nouveaux chunks (noms uniques, pas encore référencés) ;
+   2) transaction : vérifie que le cloud est toujours à la révision de départ, puis
+      écrit le doc principal (rev + 1, nouveaux monthKeys) — bascule atomique ;
+   3) supprime les chunks remplacés.
+   Si un autre appareil a écrit entre-temps : on n'écrase rien, on recharge. */
 async function pushToCloud() {
-  if (!fb || !state.cloud.user) return;
-  const mainRef = userDocRefMain();
-  if (!mainRef) return;
+  if (!fb || !state.cloud.user || !state.cloud.enabled) return;
+  if (state.cloud.pushing) { state.cloud.pushQueued = true; return; }
+  if (!hasPendingChanges()) return;
+
+  state.cloud.pushing = true;
+  setSyncStatus('syncing');
 
   // Rolling backup
   try {
@@ -2456,74 +2407,110 @@ async function pushToCloud() {
     if (current) localStorage.setItem(LS_KEY_BACKUP, current);
   } catch (e) { /* non-fatal */ }
 
+  const baseRev = state.cloud.rev;
+  const baseEpoch = state.cloud.resetEpoch;
+  const newRev = baseRev + 1;
+  const sentSeq = state.cloud.changeSeq;
+  const sentOrdersSeq = state.cloud.ordersSeq;
+  const writeOrders = hasPendingOrders();
+  const pushId = newRev + Math.random().toString(36).slice(2, 7);
+  const payload = {
+    catalogue: state.catalogue,
+    imports: state.imports,
+    settings: state.settings
+  };
+  let newKeys = state.cloud.monthKeys || [];
+  const createdKeys = [];
+
   try {
-    setSyncStatus('syncing');
-
-    const byMonth = groupOrdersByMonth(state.orders);
-    const chunks  = buildChunks(byMonth);
-    const chunkKeys = chunks.map(c => c.chunkKey);
-
-    // 1) Push main doc (small: catalogue, imports, settings, index des chunks)
-    await fb.M.setDoc(mainRef, {
-      catalogue: state.catalogue,
-      imports: state.imports,
-      settings: state.settings,
-      monthKeys: chunkKeys,        // index réel de sous-docs
-      updatedAt: fb.M.serverTimestamp(),
-      schemaVersion: 2
-    });
-
-    // 2) Push each chunk as a separate subdoc
-    const errors = [];
-    for (const { chunkKey, month, part } of chunks) {
-      try {
-        const ref = userMonthDocRef(chunkKey);
-        await fb.M.setDoc(ref, { orders: part, month, chunkKey });
-        console.log(`✓ Chunk ${chunkKey} : ${part.length} ordres`);
-      } catch (e) {
-        console.error(`✗ Chunk ${chunkKey} :`, e);
-        errors.push(`${chunkKey}: ${e.message}`);
+    if (writeOrders) {
+      const chunks = buildChunks(groupOrdersByMonth(state.orders), pushId);
+      newKeys = chunks.map(c => c.chunkKey);
+      for (const { chunkKey, month, part } of chunks) {
+        await fb.M.setDoc(userMonthDocRef(chunkKey), { orders: part, month, chunkKey, rev: newRev });
+        createdKeys.push(chunkKey);
       }
     }
-    if (errors.length > 0) throw new Error(errors.join(' | '));
 
-    // 3) Nettoyer les anciens subdocs qui ne correspondent plus à un chunk actuel
-    const existingSnap = await fb.M.getDocs(userMonthsCollectionRef());
-    const deletions = [];
-    existingSnap.forEach(d => {
-      if (!chunkKeys.includes(d.id)) {
-        deletions.push(fb.M.deleteDoc(userMonthDocRef(d.id)));
-        console.log(`🗑 Suppression ancien chunk : ${d.id}`);
+    await fb.M.runTransaction(fb.db, async (tx) => {
+      const snap = await tx.get(userDocRefMain());
+      const cur = snap.exists() ? snap.data() : {};
+      if ((cur.rev || 0) !== baseRev || (cur.resetEpoch || 0) !== baseEpoch) {
+        const e = new Error('Le cloud a été modifié par un autre appareil');
+        e.code = 'tikperf/conflict';
+        throw e;
       }
+      tx.set(userDocRefMain(), {
+        ...payload,
+        monthKeys: newKeys,
+        rev: newRev,
+        resetEpoch: baseEpoch,
+        schemaVersion: SCHEMA_VERSION,
+        migrationDone: true,
+        updatedAt: fb.M.serverTimestamp(),
+        updatedBy: state.cloud.user.email || state.cloud.user.uid
+      });
     });
-    if (deletions.length) await Promise.all(deletions);
 
-    setSyncStatus('synced');
+    const replacedKeys = writeOrders ? (state.cloud.monthKeys || []).filter(k => !newKeys.includes(k)) : [];
+    state.cloud.rev = newRev;
+    state.cloud.monthKeys = newKeys;
+    state.cloud.pushedSeq = sentSeq;
+    if (writeOrders) state.cloud.pushedOrdersSeq = sentOrdersSeq;
     state.cloud.lastSync = new Date().toISOString();
-    console.log(`✓ Push terminé — ${chunks.length} chunk(s), ${state.orders.length} ordres`);
+    writeLocalCache();
+    if (replacedKeys.length) {
+      deleteChunks(replacedKeys).catch(e => console.warn('Ménage des anciens chunks :', e));
+    }
+    setSyncStatus(hasPendingChanges() ? 'syncing' : 'synced');
+    console.log(`✓ Envoi terminé — révision ${newRev}, ${newKeys.length} chunk(s), ${state.orders.length} lignes`);
   } catch (err) {
     console.error('Push failed:', err);
-    setSyncStatus('error', err.code === 'unavailable' ? 'Hors ligne' : 'Erreur');
+    if (createdKeys.length) deleteChunks(createdKeys).catch(() => {});
+    if (err.code === 'tikperf/conflict') {
+      state.cloud.pushedSeq = state.cloud.changeSeq;
+      state.cloud.pushedOrdersSeq = state.cloud.ordersSeq;
+      toast('⚠ Les données ont été modifiées sur un autre appareil. Rechargement depuis le cloud : refais ta dernière modification si elle n\'apparaît pas.', 'warn');
+      try { await reloadFromCloud(); } catch (e) { setSyncStatus('error', 'Erreur : ' + (e.code || e.message)); }
+    } else {
+      setSyncStatus('error', err.code === 'unavailable' ? 'Hors ligne — modifs en attente' : 'Erreur : ' + (err.code || err.message));
+    }
+  } finally {
+    state.cloud.pushing = false;
+    if (state.cloud.pushQueued) {
+      state.cloud.pushQueued = false;
+      if (hasPendingChanges()) schedulePush(0);
+    }
   }
 }
 
+function schedulePush(delay) {
+  if (!state.cloud.enabled) return;
+  if (state.cloud.saveTimer) clearTimeout(state.cloud.saveTimer);
+  setSyncStatus('syncing');
+  state.cloud.saveTimer = setTimeout(() => {
+    state.cloud.saveTimer = null;
+    pushToCloud();
+  }, delay);
+}
+
+// Retour du réseau : relire le cloud si le démarrage a échoué, sinon envoyer ce qui attend
+window.addEventListener('online', () => {
+  if (!fb || !state.cloud.user) return;
+  if (!state.cloud.unsubscribe) startCloudSync();
+  else if (hasPendingChanges()) schedulePush(0);
+});
+
 /* ============ PERSISTENCE (debounced save) ============ */
-function saveState() {
-  // Always write local cache immediately
+/* opts.orders = true quand les lignes de commande ont changé (import, suppression,
+   nettoyage, restauration) ; sinon seuls le doc principal est renvoyé. */
+function saveState(opts = {}) {
+  state.cloud.changeSeq++;
+  if (opts.orders || state.orders.length !== state.cloud.lastOrdersLength) state.cloud.ordersSeq++;
+  state.cloud.lastOrdersLength = state.orders.length;
   writeLocalCache();
   updateStorageInfo();
-  // Mark the moment of this local change so the realtime listener won't
-  // overwrite it with a stale remote snapshot (fixes "deleted import bounces back").
-  state.cloud.lastLocalChange = Date.now();
-  // Debounced push to cloud (avoid flooding Firestore on rapid edits like cost entry)
-  if (state.cloud.enabled) {
-    if (state.cloud.saveTimer) clearTimeout(state.cloud.saveTimer);
-    setSyncStatus('syncing');
-    state.cloud.saveTimer = setTimeout(() => {
-      pushToCloud();
-      state.cloud.saveTimer = null;
-    }, 800);
-  }
+  if (state.cloud.enabled) schedulePush(opts.immediate ? 0 : 800);
 }
 
 function loadState() {
@@ -2543,7 +2530,7 @@ function updateStorageInfo() {
       <strong>${state.orders.length}</strong> lignes de commande ·
       <strong>${state.imports.length}</strong> fichier(s) importé(s) ·
       <strong>${Object.keys(state.catalogue.byProduct).length}</strong> produit(s) + <strong>${Object.keys(state.catalogue.byVariant).length}</strong> override(s) variante<br>
-      <span class="cell-muted" style="font-size:11px;">Cache local : ${kb} KB · Dernière synchro : ${lastSync}</span>
+      <span class="cell-muted" style="font-size:11px;">Cache local : ${kb} KB · Dernière synchro : ${lastSync} · Révision cloud : ${state.cloud.rev}</span>
     `;
   }
 
@@ -2672,7 +2659,7 @@ function handleFile(file) {
       // ══════════════════════════════════════════════════════════════════════
       // CONTRÔLE AVANT IMPORT (v1.7.27) — prévient les doublons et chevauchements
       // ══════════════════════════════════════════════════════════════════════
-      const rowSignaturePre = (r) => Object.keys(r).sort().map(k => `${k}=${r[k]}`).join('\u0001');
+      const rowSignaturePre = rowSig;
 
       // 1) Combien de lignes de ce fichier sont VRAIMENT nouvelles ?
       const existingCountsPre = new Map();
@@ -2748,7 +2735,12 @@ function handleFile(file) {
       // dropped legitimate rows. A full-row signature with occurrence counting only
       // treats a row as a duplicate when an IDENTICAL row was already imported the
       // exact same number of times — safe against re-imports, safe against split rows.
-      const rowSignature = (r) => Object.keys(r).sort().map(k => `${k}=${r[k]}`).join('\u0001');
+      const rowSignature = rowSig;
+
+      // Signature de contenu STABLE (nom + période + nb de lignes). Elle sert aussi à
+      // marquer chaque ligne ajoutée (__imp) pour pouvoir supprimer CE fichier seul.
+      const dates = rows.map(r => r['Statement date']).filter(d => d && d !== '/').sort();
+      const contentSig = `${file.name}|${dates[0] || '?'}|${dates[dates.length-1] || '?'}|${rows.length}`;
 
       const existingCounts = new Map();
       state.orders.forEach(o => {
@@ -2766,14 +2758,13 @@ function handleFile(file) {
           // Already imported this exact row before → skip, decrement budget
           existingCounts.set(sig, remaining - 1);
         } else {
-          state.orders.push(r);
+          state.orders.push({ ...r, __imp: contentSig });
           added++;
         }
         if (r['Statement ID']) newStatementIds.add(String(r['Statement ID']));
       });
 
       // Compute import metadata
-      const dates = rows.map(r => r['Statement date']).filter(d => d && d !== '/').sort();
       const totalCA = rows.reduce((s, r) => s + (parseFloat(r['Subtotal before discounts']) || 0), 0);
 
       // v1.7.27 FIX: n'ajouter une entrée d'historique QUE si de nouvelles lignes
@@ -2783,7 +2774,6 @@ function handleFile(file) {
         // Signature de contenu STABLE (indépendante de l'heure d'import) : nom +
         // période + nb de lignes. Sert à dédupliquer l'historique lors des fusions
         // cloud, même si importedAt diffère entre appareils.
-        const contentSig = `${file.name}|${dates[0] || '?'}|${dates[dates.length-1] || '?'}|${rows.length}`;
         // Retirer toute entrée précédente ayant la même signature de contenu
         state.imports = state.imports.filter(imp => imp.contentSig !== contentSig);
         state.imports.push({
@@ -2798,7 +2788,7 @@ function handleFile(file) {
         });
       }
 
-      saveState();
+      saveState({ orders: true });
       toast(`✓ ${added} nouvelle(s) ligne(s) importée(s) (${rows.length - added} doublons ignorés)`, 'success');
       renderCurrentPage();
     } catch (err) {
@@ -3824,14 +3814,24 @@ function renderImports() {
 }
 
 function deleteImport(idx) {
-  if (!confirm('Supprimer cet import et toutes ses lignes ?')) return;
   const imp = state.imports[idx];
-  const stIds = new Set(imp.statementIds.map(String));
-  state.orders = state.orders.filter(o => !stIds.has(String(o['Statement ID'])));
+  if (!imp) return;
+  if (!confirm('Supprimer cet import et toutes ses lignes ?')) return;
+  const before = state.orders.length;
+  if (imp.contentSig && state.orders.some(o => o.__imp === imp.contentSig)) {
+    // v1.7.28 : on ne retire que les lignes venues de CE fichier
+    state.orders = state.orders.filter(o => o.__imp !== imp.contentSig);
+  } else if (Array.isArray(imp.statementIds) && imp.statementIds.length) {
+    // Import antérieur à v1.7.28 (lignes non marquées) : ancienne méthode par relevé,
+    // limitée aux lignes non marquées pour ne pas toucher aux fichiers récents.
+    const stIds = new Set(imp.statementIds.map(String));
+    state.orders = state.orders.filter(o => o.__imp || !stIds.has(String(o['Statement ID'])));
+  }
+  const removed = before - state.orders.length;
   state.imports.splice(idx, 1);
-  saveState();
+  saveState({ orders: true });
   renderCurrentPage();
-  toast('Import supprimé', 'success');
+  toast(`Import supprimé (${removed} ligne(s) retirée(s))`, 'success');
 }
 
 /* ============ RENDER: CATALOGUE ============ */
@@ -5048,25 +5048,6 @@ function attachKpiClicks() {
   }, { passive: true });
 })();
 
-/* ── Pré-chargement des données du fichier Achats_marchandises.xlsx ─────
-   Injecté automatiquement au premier chargement si aucune valeur n'existe
-   pour ces mois. Les saisies manuelles ne sont jamais écrasées.          */
-function preloadAchatsIfEmpty() {
-  if (!state.settings.achats) state.settings.achats = {};
-  const preload = { '2026-03': 4182, '2026-04': 2154, '2026-05': 2460 };
-  let changed = false;
-  Object.entries(preload).forEach(([m, v]) => {
-    if (!state.settings.achats[m] || parseFloat(state.settings.achats[m]) === 0) {
-      state.settings.achats[m] = v;
-      changed = true;
-    }
-  });
-  if (changed) {
-    saveState();
-    console.log('✓ Achats fournisseurs pré-chargés depuis Achats_marchandises.xlsx');
-  }
-}
-
 /* ── Import XLSX fournisseurs ────────────────────────────────────────────
    Format attendu : colonnes FOURNISSEURS | DATE | MONTANT HT | Frais de Port
    Agrège par mois (YYYY-MM), somme MONTANT HT uniquement.
@@ -5488,7 +5469,7 @@ function restoreBackup(file) {
         state.catalogue = { byProduct: {}, byVariant: {} };
       }
       if (data.settings) state.settings = { ...state.settings, ...data.settings };
-      saveState();
+      saveState({ orders: true });
       renderCurrentPage();
       toast('Sauvegarde restaurée', 'success');
     } catch (err) {
@@ -5502,94 +5483,94 @@ async function resetAll() {
   if (!confirm('⚠ RÉINITIALISATION TOTALE\n\nToutes les données seront DÉFINITIVEMENT effacées, partout :\n• le cloud partagé (tous les appareils)\n• l\'ancien espace personnel\n• le cache local + la sauvegarde auto\n\nAprès ça, plus rien ne pourra restaurer les anciennes données. Continuer ?')) return;
   if (!confirm('Dernière confirmation : cette action est IRRÉVERSIBLE. Tu devras réimporter tes fichiers. Continuer ?')) return;
 
-  setSyncStatus('syncing');
+  const clearLocal = () => {
+    try {
+      localStorage.removeItem(LS_KEY);
+      localStorage.removeItem(LS_KEY_BACKUP);
+    } catch (e) { /* non-fatal */ }
+  };
 
-  // 0) VERROUILLAGE : couper le listener temps réel et poser le drapeau critique,
-  //    pour qu'AUCUNE re-synchro ne puisse restaurer les données pendant/après le reset.
+  // Mode local (sans cloud) : on vide seulement cet appareil
+  if (!fb || !state.cloud.user) {
+    clearLocal();
+    location.reload();
+    return;
+  }
+
+  // 0) Couper l'écoute temps réel et tout envoi en attente
   state.cloud.criticalOp = true;
+  if (state.cloud.saveTimer) { clearTimeout(state.cloud.saveTimer); state.cloud.saveTimer = null; }
   if (state.cloud.unsubscribe) {
     try { state.cloud.unsubscribe(); } catch (e) {}
     state.cloud.unsubscribe = null;
   }
+  setSyncStatus('syncing', 'Réinitialisation…');
 
-  // 1) Vider l'état en mémoire
-  state.orders = [];
-  state.imports = [];
-  state.catalogue = { byProduct: {}, byVariant: {} };
-  state.settings = { vatMode: 'ttc_20', vatCustomRate: 20, excludeRefundedFromCogs: true, autresCharges: {}, acDisplayMode: 'nominal', achats: {}, achatsTransport: {} };
-  state.ui.yearFilter = 'all';
-  state.ui.vatDisplay = 'ht';
-
-  // 2) Effacer TOUT le stockage local
+  let report;
   try {
-    localStorage.removeItem(LS_KEY);
-    localStorage.removeItem(LS_KEY_BACKUP);
-    localStorage.setItem('tikperf_bylou_migration_done', '1');
-  } catch (e) { /* non-fatal */ }
-
-  // 3) Effacer le cloud, avec VÉRIFICATION que la purge a réussi
-  let cloudErr = null;
-  if (fb && state.cloud.user) {
-    try {
-      // a) Doc principal partagé VIDÉ en premier (monthKeys vide + drapeau)
-      await fb.M.setDoc(userDocRefMain(), {
-        catalogue: {}, imports: [], settings: state.settings,
-        monthKeys: [], migrationDone: true,
-        updatedAt: fb.M.serverTimestamp(), schemaVersion: 2
+    // 1) Doc principal vidé + NOUVELLE époque. Tout appareil qui voit cette époque
+    //    vide sa copie locale ; un appareil en retard ne peut plus rien renvoyer
+    //    (sa transaction échoue car la révision a changé).
+    const newEpoch = Date.now();
+    await fb.M.runTransaction(fb.db, async (tx) => {
+      const snap = await tx.get(userDocRefMain());
+      const cur = snap.exists() ? snap.data() : {};
+      tx.set(userDocRefMain(), {
+        catalogue: { byProduct: {}, byVariant: {} },
+        imports: [],
+        settings: defaultSettings(),
+        monthKeys: [],
+        rev: (cur.rev || 0) + 1,
+        resetEpoch: newEpoch,
+        schemaVersion: SCHEMA_VERSION,
+        migrationDone: true,
+        updatedAt: fb.M.serverTimestamp(),
+        updatedBy: state.cloud.user.email || state.cloud.user.uid
       });
+    });
 
-      // b) Supprimer TOUS les sous-docs months de l'espace partagé (boucle jusqu'à vide)
-      for (let pass = 0; pass < 3; pass++) {
-        const snap = await fb.M.getDocs(userMonthsCollectionRef());
-        if (snap.empty) break;
-        const dels = [];
-        snap.forEach(d => dels.push(fb.M.deleteDoc(userMonthDocRef(d.id))));
-        await Promise.all(dels);
-      }
-      // Vérifier que c'est bien vide
-      const check = await fb.M.getDocs(userMonthsCollectionRef());
-      if (!check.empty) throw new Error(`${check.size} chunk(s) subsistent après purge`);
+    // 2) Supprimer tous les chunks (liste lue sur le serveur), puis l'ancien espace perso
+    await deleteAllDocsFromServer(userMonthsCollectionRef());
+    await deleteAllDocsFromServer(legacyUserMonthsRef());
+    await fb.M.deleteDoc(legacyUserDocRef());
 
-      // c) Purger l'ancien espace perso users/{uid}
-      const legacyMonthsRef = legacyUserMonthsRef();
-      if (legacyMonthsRef) {
-        for (let pass = 0; pass < 3; pass++) {
-          const ls = await fb.M.getDocs(legacyMonthsRef);
-          if (ls.empty) break;
-          const dl = [];
-          ls.forEach(d => dl.push(fb.M.deleteDoc(fb.M.doc(fb.db, 'users', state.cloud.user.uid, 'months', d.id))));
-          await Promise.all(dl);
-        }
-      }
-      const legacyMainRef = legacyUserDocRef();
-      if (legacyMainRef) {
-        await fb.M.setDoc(legacyMainRef, { orders: [], imports: [], monthKeys: [], purged: true, migrationDone: true, updatedAt: fb.M.serverTimestamp() });
-      }
-    } catch (e) {
-      console.error('Reset cloud error:', e);
-      cloudErr = e.message;
+    // 3) Vérification sur le SERVEUR (pas dans un cache)
+    await fb.M.waitForPendingWrites(fb.db);
+    const [mainSnap, monthsSnap] = await Promise.all([
+      fb.M.getDocFromServer(userDocRefMain()),
+      fb.M.getDocsFromServer(userMonthsCollectionRef())
+    ]);
+    const m = mainSnap.exists() ? mainSnap.data() : {};
+    const problems = [];
+    if (m.resetEpoch !== newEpoch) problems.push('un autre appareil a écrit pendant le reset');
+    if ((m.imports || []).length) problems.push(`${m.imports.length} import(s) dans l'historique`);
+    if ((m.monthKeys || []).length) problems.push(`${m.monthKeys.length} morceau(x) référencé(s)`);
+    const cat = normalizeCatalogue(m.catalogue);
+    if (Object.keys(cat.byProduct).length || Object.keys(cat.byVariant).length) problems.push('catalogue non vide');
+    if (!monthsSnap.empty) problems.push(`${monthsSnap.size} document(s) encore dans months`);
+
+    if (problems.length) {
+      report = { type: 'error', msg: '⚠ Reset incomplet, vérifié sur le serveur : ' + problems.join(', ') + '. Ferme l\'app sur les autres appareils et recommence.' };
+    } else {
+      report = { type: 'success', msg: '✓ Réinitialisation réussie, vérifiée sur le serveur (0 commande, 0 import). Réimporte tes fichiers.' };
     }
-  }
-
-  writeLocalCache();
-  goPage('dashboard');
-  renderCurrentPage();
-
-  // 4) Relancer le listener APRÈS un délai de sécurité, sur l'état propre
-  setTimeout(() => {
+  } catch (e) {
+    console.error('Reset cloud error:', e);
     state.cloud.criticalOp = false;
-    // Re-souscrire proprement (le listener a été coupé plus haut)
-    if (state.cloud.enabled && fb && state.cloud.user && !state.cloud.unsubscribe) {
-      startCloudSync();
-    }
-  }, 5000);
-
-  setSyncStatus(cloudErr ? 'error' : 'synced');
-  if (cloudErr) {
-    toast('⚠ Reset local OK mais le cloud a résisté : ' + cloudErr + '. Réessaie ou vérifie les règles Firestore.', 'error');
-  } else {
-    toast('✓ Réinitialisation totale réussie (local + cloud vérifiés vides). Réimporte tes fichiers.', 'success');
+    subscribeMainDoc();
+    setSyncStatus('error', 'Erreur : ' + (e.code || e.message));
+    toast('⚠ Le reset du cloud a échoué (' + (e.code || e.message) + '). Rien n\'a été effacé sur cet appareil.', 'error');
+    return;
   }
+
+  // 4) Vider cet appareil (cache local + cache Firestore) et redémarrer l'app
+  clearLocal();
+  try { sessionStorage.setItem('tikperf_pending_toast', JSON.stringify(report)); } catch (e) { /* non-fatal */ }
+  try {
+    await fb.M.terminate(fb.db);
+    await fb.M.clearIndexedDbPersistence(fb.db);
+  } catch (e) { console.warn('Nettoyage du cache Firestore :', e); }
+  location.reload();
 }
 
 /* ============ EVENT BINDING ============ */
@@ -5724,8 +5705,16 @@ function bindEvents() {
 /* ============ SERVICE WORKER ============ */
 function registerServiceWorker() {
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-    navigator.serviceWorker.register('sw.js')
-      .then((reg) => console.log('SW registered:', reg.scope))
+    const hadController = !!navigator.serviceWorker.controller;
+    let reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      // Nouvelle version installée : recharger une fois pour l'utiliser
+      if (!hadController || reloading) return;
+      reloading = true;
+      location.reload();
+    });
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+      .then((reg) => { console.log('SW registered:', reg.scope); reg.update().catch(() => {}); })
       .catch((err) => console.warn('SW registration failed:', err));
   }
 }
@@ -5733,6 +5722,14 @@ function registerServiceWorker() {
 /* ============ INIT ============ */
 window.addEventListener('DOMContentLoaded', () => {
   bindEvents();
+  try {
+    const pending = sessionStorage.getItem('tikperf_pending_toast');
+    if (pending) {
+      sessionStorage.removeItem('tikperf_pending_toast');
+      const t = JSON.parse(pending);
+      setTimeout(() => toast(t.msg, t.type), 1500);
+    }
+  } catch (e) { /* non-fatal */ }
   renderYearFilters();
   goPage('dashboard');
   registerServiceWorker();
@@ -5741,7 +5738,6 @@ window.addEventListener('DOMContentLoaded', () => {
   if (FIREBASE_CONFIG.apiKey === 'REPLACE_ME') {
     console.warn('Firebase config not set — running in local-only mode');
     loadState();
-    preloadAchatsIfEmpty();
     showApp();
     setSyncStatus('offline', 'Mode local');
     document.getElementById('userChip').textContent = 'Local';
